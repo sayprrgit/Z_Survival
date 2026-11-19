@@ -37,6 +37,9 @@ final class Character extends AbstractCombatantCatalogItem
     #[ORM\Column(options: ['default' => 0])]
     private float $healthRegeneration = 0;
 
+    #[ORM\Column(options: ['default' => 0])]
+    private float $healingEffectivenessBonus = 0;
+
     #[ORM\ManyToOne(inversedBy: 'startingCharacters')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'RESTRICT')]
     private Weapon $startingWeapon;
@@ -77,6 +80,7 @@ final class Character extends AbstractCombatantCatalogItem
         float $criticalChanceBonus = 0,
         float $damageReduction = 0,
         float $healthRegeneration = 0,
+        float $healingEffectivenessBonus = 0,
     ) {
         parent::__construct($name, $description, $baseHealth);
         $this->code = $code;
@@ -91,6 +95,7 @@ final class Character extends AbstractCombatantCatalogItem
         $this->criticalChanceBonus = $criticalChanceBonus;
         $this->damageReduction = $damageReduction;
         $this->healthRegeneration = $healthRegeneration;
+        $this->healingEffectivenessBonus = $healingEffectivenessBonus;
         $this->runs = new ArrayCollection();
         $this->userCharacters = new ArrayCollection();
     }

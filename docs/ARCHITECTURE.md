@@ -51,7 +51,8 @@ duplication sans mélanger des concepts métier différents :
 
 1. Le schéma initial est migré ; une migration renomme la colonne réservée
    `range` en `attack_range` pour MySQL.
-2. Les fixtures du MVP chargent deux personnages, trois armes, quatre power-ups,
-   quatre ennemis dont le Colosse, neuf talents et la difficulté Normal.
+2. Les fixtures chargent le catalogue complet décrit : quatre personnages, six
+   armes, huit power-ups, quatre zombies, deux boss, quinze talents et trois
+   difficultés.
 3. Créer l'authentification et les contrôleurs Twig/API avec leurs tests.
 4. Implémenter progressivement les factories et le moteur JavaScript.

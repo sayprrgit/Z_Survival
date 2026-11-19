@@ -8,6 +8,7 @@ use App\DataFixtures\GameCatalogFixtures;
 use Doctrine\Common\DataFixtures\Executor\ORMExecutor;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Mapping\UnderscoreNamingStrategy;
 use Doctrine\ORM\ORMSetup;
 use Doctrine\ORM\Tools\SchemaTool;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -27,6 +28,7 @@ final class GameCatalogFixturesTest extends KernelTestCase
         );
         $configuration->enableNativeLazyObjects(true);
         $configuration->setUseSchemaEditorAPI(true);
+        $configuration->setNamingStrategy(new UnderscoreNamingStrategy());
         $connection = DriverManager::getConnection([
             'driver' => 'pdo_sqlite',
             'memory' => true,
@@ -45,20 +47,23 @@ final class GameCatalogFixturesTest extends KernelTestCase
         parent::tearDown();
     }
 
-    public function testLoadsTheMvpGameCatalog(): void
+    public function testLoadsTheCompleteCatalogIdempotently(): void
     {
-        (new ORMExecutor($this->entityManager))->execute([new GameCatalogFixtures()], append: true);
+        $fixture = new GameCatalogFixtures();
+        (new ORMExecutor($this->entityManager))->execute([$fixture, $fixture], append: true);
 
-        self::assertSame(2, $this->countRows('characters'));
-        self::assertSame(3, $this->countRows('weapons'));
-        self::assertSame(4, $this->countRows('power_ups'));
-        self::assertSame(4, $this->countRows('enemy_types'));
-        self::assertSame(9, $this->countRows('talents'));
-        self::assertSame(1, $this->countRows('difficulties'));
+        self::assertSame(4, $this->countRows('characters'));
+        self::assertSame(6, $this->countRows('weapons'));
+        self::assertSame(8, $this->countRows('power_ups'));
+        self::assertSame(6, $this->countRows('enemy_types'));
+        self::assertSame(2, $this->countRows('enemy_types', 'is_boss = 1'));
+        self::assertSame(15, $this->countRows('talents'));
+        self::assertSame(3, $this->countRows('difficulties'));
+        self::assertEqualsWithDelta(0.25, (float) $this->entityManager->getConnection()->fetchOne("SELECT healing_effectiveness_bonus FROM characters WHERE code = 'eva'"), 0.0001);
     }
 
-    private function countRows(string $tableName): int
+    private function countRows(string $tableName, string $condition = '1 = 1'): int
     {
-        return (int) $this->entityManager->getConnection()->fetchOne(sprintf('SELECT COUNT(*) FROM %s', $tableName));
+        return (int) $this->entityManager->getConnection()->fetchOne(sprintf('SELECT COUNT(*) FROM %s WHERE %s', $tableName, $condition));
     }
 }
