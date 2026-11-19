@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Game\Character\CharacterFactory;
+use App\Game\Run\GameConfigurationBuilder;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -13,7 +14,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class GameController extends AbstractController
 {
     #[Route('/game', name: 'game_index', methods: ['GET'])]
-    public function index(Request $request, CharacterFactory $characterFactory): Response
+    public function index(Request $request, CharacterFactory $characterFactory, GameConfigurationBuilder $configurationBuilder): Response
     {
         $selectedCharacter = $characterFactory->findByValue((string) $request->getSession()->get('selected_character'));
         if ($selectedCharacter === null) {
@@ -24,6 +25,7 @@ final class GameController extends AbstractController
 
         return $this->render('game/index.html.twig', [
             'character' => $selectedCharacter,
+            'gameConfiguration' => $configurationBuilder->build($selectedCharacter),
         ]);
     }
 }

@@ -72,4 +72,17 @@ final class Weapon extends AbstractLevelableCatalogItem
         $this->areaOfEffect = $areaOfEffect;
         $this->startingCharacters = new ArrayCollection();
     }
+
+    public function getCode(): WeaponCode { return $this->code; }
+    public function getName(): string { return $this->name; }
+    public function getDescription(): string { return $this->description; }
+    public function getAttackType(): string { return $this->attackType; }
+    public function getBaseDamage(): float { return $this->baseDamage; }
+    public function getAttackInterval(): float { return $this->attackInterval; }
+    public function getRange(): float { return $this->range; }
+    public function getProjectileCount(): int { return $this->projectileCount; }
+    public function getPierceCount(): int { return $this->pierceCount; }
+    public function getAreaOfEffect(): float { return $this->areaOfEffect; }
+    public function getMaxLevel(): int { return $this->maxLevel; }
+    public function getMaxUpgradeDescription(): string { return $this->maxUpgradeDescription; }
 }

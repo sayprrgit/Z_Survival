@@ -30,4 +30,11 @@ final class PowerUp extends AbstractLevelableCatalogItem
         $this->effectType = $effectType;
         $this->bonusPerLevel = $bonusPerLevel;
     }
+
+    public function getCode(): PowerUpCode { return $this->code; }
+    public function getName(): string { return $this->name; }
+    public function getDescription(): string { return $this->description; }
+    public function getEffectType(): string { return $this->effectType; }
+    public function getBonusPerLevel(): float { return $this->bonusPerLevel; }
+    public function getMaxLevel(): int { return $this->maxLevel; }
 }
