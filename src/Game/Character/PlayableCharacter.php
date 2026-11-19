@@ -17,6 +17,12 @@ abstract class PlayableCharacter
         public readonly string $passiveDescription,
         public readonly StatBlock $stats,
         public readonly WeaponCode $startingWeapon,
+        public readonly float $damageBonus = 0,
+        public readonly float $attackSpeedBonus = 0,
+        public readonly float $movementSpeedBonus = 0,
+        public readonly float $criticalChanceBonus = 0,
+        public readonly float $damageReduction = 0,
+        public readonly float $healthRegeneration = 0,
     ) {
     }
 

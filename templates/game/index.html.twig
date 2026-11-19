@@ -3,14 +3,13 @@
 {% block title %}Z_Survival — Partie{% endblock %}
 
 {% block body %}
-    <section class="game-ready">
-        <div class="deployment-stamp">SYSTÈME PRÊT</div>
-        <p class="eyebrow"><span class="status-dot"></span> Survivant verrouillé</p>
-        <h1>{{ character.name }}<br><em>est prêt.</em></h1>
-        <div class="loadout-row">
-            <span>{{ character.code.value }}</span><span>{{ character.startingWeapon.name }}</span><span>{{ character.baseHealth }} PV</span>
-        </div>
-        <p>Le terrain est chargé. Le moteur Canvas sera branché dans la prochaine étape ; ton survivant est déjà transmis par la session.</p>
-        <a class="button button-secondary" href="{{ path('character_index') }}"><span>Changer de survivant</span><b>↺</b></a>
+    <section class="arena" data-game-root>
+        <header class="arena-hud"><strong>{{ character.name }}</strong><span>Niveau <b data-level>1</b></span><span>Éliminations <b data-kills>0</b></span><span><b data-health>{{ character.baseHealth }}</b> PV</span><span><b data-time>00:00</b></span></header>
+        <div class="health-track"><span data-health-bar></span></div>
+        <canvas data-game-canvas aria-label="Jeu de survie. Déplacement avec ZQSD ou les flèches."></canvas>
+        <p class="arena-help">Déplacement : ZQSD / WASD / flèches · Les armes tirent automatiquement · Récupère les orbes d’expérience</p>
+        <div class="upgrade-overlay" data-upgrade hidden><div class="upgrade-dialog"><p class="eyebrow">NOUVEAU NIVEAU</p><h2>Choisis une amélioration</h2><div data-upgrade-options></div></div></div>
+        <div class="upgrade-overlay" data-game-over hidden><div class="upgrade-dialog"><p class="eyebrow">PARTIE TERMINÉE</p><h2 data-end-title></h2><p data-end-stats></p><a class="button button-secondary" href="{{ path('character_index') }}">Retour au choix du survivant</a></div></div>
+        <script type="application/json" data-game-config>{{ gameConfiguration|json_encode(constant('JSON_HEX_TAG') b-or constant('JSON_HEX_APOS') b-or constant('JSON_HEX_AMP') b-or constant('JSON_HEX_QUOT'))|raw }}</script>
     </section>
 {% endblock %}
