@@ -29,4 +29,12 @@ final class RewardCalculatorTest extends TestCase
 
         self::assertSame(0, (new RewardCalculator())->calculate(0, 0, $difficulty)->scrap);
     }
+
+    #[Test]
+    public function it_applies_the_purchased_scrap_bonus_after_the_difficulty_multiplier(): void
+    {
+        $difficulty = new Difficulty(DifficultyCode::Hard, 'Hard', 'Test', 1.3, 2);
+
+        self::assertSame(7, (new RewardCalculator())->calculate(180, 20, $difficulty, 0.2)->scrap);
+    }
 }

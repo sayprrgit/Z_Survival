@@ -13,6 +13,7 @@ use App\Entity\User;
 use App\Enum\RunResult;
 use App\Enum\RunStatus;
 use App\Game\Reward\RewardCalculator;
+use App\Game\Talent\TalentEffectResolver;
 use App\Repository\RunRepository;
 use Doctrine\DBAL\LockMode;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
@@ -25,6 +26,7 @@ final readonly class RunService
         private RunRepository $runs,
         private RunResultValidator $validator,
         private RewardCalculator $rewardCalculator,
+        private TalentEffectResolver $talentEffects,
     ) {
     }
 
@@ -64,7 +66,8 @@ final readonly class RunService
             if ($run->getStatus() === RunStatus::Active) {
                 $now = new \DateTimeImmutable();
                 $this->validator->validate($run, $request, $now);
-                $reward = $this->rewardCalculator->calculate($request->survivalSeconds, $request->kills, $run->getDifficulty());
+                $scrapBonus = $this->talentEffects->effectsFor($lockedUser)['scrap_bonus'] ?? 0.0;
+                $reward = $this->rewardCalculator->calculate($request->survivalSeconds, $request->kills, $run->getDifficulty(), $scrapBonus);
                 $run->finish($request->survivalSeconds, $request->reachedLevel, $request->kills, $request->result, $reward->scrap, $now);
             }
 

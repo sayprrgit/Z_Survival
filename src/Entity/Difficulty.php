@@ -45,6 +45,16 @@ final class Difficulty extends AbstractCatalogItem
         return $this->name;
     }
 
+    public function getDescription(): string
+    {
+        return $this->description;
+    }
+
+    public function getSortOrder(): int
+    {
+        return $this->sortOrder;
+    }
+
     public function getMultiplier(): float
     {
         return $this->multiplier;

@@ -14,4 +14,9 @@ final class TalentRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Talent::class);
     }
+
+    public function findByCode(string $code): ?Talent
+    {
+        return $this->findOneBy(['code' => $code]);
+    }
 }

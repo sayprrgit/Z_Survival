@@ -6,6 +6,7 @@ namespace App\Game\Run;
 
 use App\DTO\FinishRunRequest;
 use App\Entity\Run;
+use App\Enum\RunResult;
 use App\Enum\RunStatus;
 
 final class RunResultValidator
@@ -14,6 +15,10 @@ final class RunResultValidator
     {
         if ($run->getStatus() !== RunStatus::Active) {
             throw new \DomainException('Cette partie n’est plus active.');
+        }
+
+        if ($request->result === RunResult::Victory) {
+            throw new \DomainException('Une victoire doit être confirmée par une condition vérifiée côté serveur.');
         }
 
         $now ??= new \DateTimeImmutable();

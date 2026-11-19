@@ -128,5 +128,70 @@ final class AuthenticationTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $userAfterFinish = $entityManager->find(User::class, $user->getId());
         self::assertSame(1, $userAfterFinish->getTotalRuns());
+
+        $this->client->request('GET', '/api/runs?page=1&limit=10');
+        $history = json_decode((string) $this->client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertSame(1, $history['total']);
+        self::assertSame($runId, $history['items'][0]['id']);
+        self::assertSame('defeat', $history['items'][0]['result']);
+    }
+
+    public function testUnlocksTalentsProfileAndGameStatsUsePersistedAccountData(): void
+    {
+        $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $user = new User('progression@example.test', '');
+        $user->setPassword(static::getContainer()->get(UserPasswordHasherInterface::class)->hashPassword($user, 'strong-password-123'));
+        $user->recordRun(1000, 120, 20, false);
+        $entityManager->persist($user);
+        $entityManager->flush();
+        $this->client->loginUser($user);
+        $crawler = $this->client->request('GET', '/');
+        $lockedSelection = $crawler->filter('form[action="/characters/raven/select"]')->form();
+        $this->client->submit($lockedSelection);
+        self::assertResponseStatusCodeSame(403);
+
+        $crawler = $this->client->request('GET', '/');
+        $unlockToken = $crawler->filter('meta[name="csrf-unlock-character"]')->attr('content');
+        $this->client->jsonRequest('POST', '/api/characters/raven/unlock', [], ['HTTP_X_CSRF_TOKEN' => $unlockToken]);
+        self::assertResponseIsSuccessful();
+        self::assertSame(750, json_decode((string) $this->client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR)['scrapBalance']);
+        $this->client->jsonRequest('POST', '/api/characters/raven/unlock', [], ['HTTP_X_CSRF_TOKEN' => $unlockToken]);
+        self::assertResponseIsSuccessful();
+        self::assertTrue(json_decode((string) $this->client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR)['alreadyUnlocked']);
+
+        $talentToken = $crawler->filter('meta[name="csrf-purchase-talent"]')->attr('content');
+        $this->client->jsonRequest('POST', '/api/talents/armor/purchase', [], ['HTTP_X_CSRF_TOKEN' => $talentToken]);
+        self::assertResponseStatusCodeSame(400);
+        foreach (['endurance', 'armor', 'power', 'cadence'] as $talentCode) {
+            $this->client->jsonRequest('POST', sprintf('/api/talents/%s/purchase', $talentCode), [], ['HTTP_X_CSRF_TOKEN' => $talentToken]);
+            self::assertResponseIsSuccessful();
+        }
+        $this->client->jsonRequest('POST', '/api/talents/endurance/purchase', [], ['HTTP_X_CSRF_TOKEN' => $talentToken]);
+        self::assertTrue(json_decode((string) $this->client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR)['alreadyOwned']);
+        $this->client->jsonRequest('POST', '/api/characters/boris/unlock', [], ['HTTP_X_CSRF_TOKEN' => $unlockToken]);
+        self::assertResponseStatusCodeSame(400);
+
+        $profile = $this->client->request('GET', '/api/profile');
+        $profileData = json_decode((string) $this->client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertSame(200, $this->client->getResponse()->getStatusCode());
+        self::assertSame(200, $profileData['scrap']);
+        self::assertContains('raven', array_column(array_filter($profileData['characters'], static fn (array $item): bool => $item['unlocked']), 'code'));
+        self::assertContains('cadence', array_column(array_filter($profileData['talents'], static fn (array $item): bool => $item['owned']), 'code'));
+
+        $this->client->request('GET', '/api/runs?page=1&limit=10');
+        $history = json_decode((string) $this->client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertSame(0, $history['total']);
+
+        $crawler = $this->client->request('GET', '/');
+        $form = $crawler->filter('form[action="/characters/mason/select"]')->form();
+        $this->client->submit($form);
+        $crawler = $this->client->request('GET', '/game');
+        $configuration = json_decode($crawler->filter('[data-game-config]')->text(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertCount(6, $configuration['enemies']);
+        self::assertCount(2, array_filter($configuration['enemies'], static fn (array $enemy): bool => $enemy['isBoss']));
+        self::assertCount(3, $configuration['difficulties']);
+        self::assertEqualsWithDelta(0.2, $configuration['player']['damageBonus'], 0.000001);
+        self::assertEqualsWithDelta(0.15, $configuration['player']['attackSpeedBonus'], 0.000001);
+        self::assertEqualsWithDelta(0.03, $configuration['player']['damageReduction'], 0.000001);
     }
 }

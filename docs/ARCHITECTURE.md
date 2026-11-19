@@ -1,8 +1,8 @@
 # Architecture — Z_Survival
 
-Le socle définit les frontières du projet et le modèle Doctrine. Le schéma MySQL
-est créé par migrations ; les routes métier et les services de jeu restent à
-compléter.
+Le serveur fournit les comptes, la progression permanente, les parties et la
+configuration du jeu. Le schéma MySQL est géré par migrations Doctrine ; le
+moteur de combat tourne dans le navigateur et consomme les données du serveur.
 
 | Zone | Responsabilité |
 | --- | --- |
@@ -47,12 +47,38 @@ duplication sans mélanger des concepts métier différents :
 - `AbstractUserAcquisition` : utilisateur propriétaire et date d'acquisition
   pour les contenus déverrouillés.
 
-## État et étapes suivantes
+## Parcours serveur disponibles
 
-1. Le schéma initial est migré ; une migration renomme la colonne réservée
-   `range` en `attack_range` pour MySQL.
-2. Les fixtures chargent le catalogue complet décrit : quatre personnages, six
-   armes, huit power-ups, quatre zombies, deux boss, quinze talents et trois
-   difficultés.
-3. Créer l'authentification et les contrôleurs Twig/API avec leurs tests.
-4. Implémenter progressivement les factories et le moteur JavaScript.
+1. Le schéma MySQL est créé par migrations ; la colonne réservée `range` a été
+   renommée en `attack_range`.
+2. Les fixtures chargent quatre personnages, six armes, huit power-ups, quatre
+   zombies, deux boss, quinze talents et trois difficultés.
+3. L'inscription hache les mots de passe ; la connexion et la déconnexion
+   utilisent Symfony Security et des jetons CSRF. Les pages de jeu et les routes
+   de progression exigent `ROLE_USER`.
+4. `POST /api/runs/start` crée une partie liée au compte, au personnage débloqué
+   et à la difficulté. `POST /api/runs/{id}/finish` vérifie le propriétaire, le
+   statut, la durée, le niveau et le nombre d'éliminations, puis sauvegarde la
+   partie et verse sa récompense dans une transaction idempotente.
+5. `GET /api/profile` et `GET /api/runs?page=1&limit=20` exposent le profil et
+   l'historique paginé du compte connecté.
+6. `GET /api/characters` et `POST /api/characters/{code}/unlock` exposent et
+   gèrent les personnages. Les achats vérifient le solde, débitent la ferraille
+   dans une transaction et sont idempotents.
+7. `GET /api/talents` et `POST /api/talents/{code}/purchase` exposent l'arbre
+   des talents et appliquent les prérequis de branche. Les effets achetés sont
+   ajoutés aux statistiques du joueur et aux récompenses de partie.
+8. La configuration transmise au moteur comprend les statistiques du personnage
+   et talents, armes, power-ups, ennemis, boss et difficultés.
+
+## Limites et suite
+
+- Les statistiques de combat viennent du moteur dans le navigateur. Le serveur
+  vérifie les bornes reçues, mais ne rejoue pas les combats ; les résultats
+  restent donc fondés sur les données envoyées par le client. Les victoires sont
+  refusées tant qu'une condition de boss n'est pas confirmable côté serveur.
+- Le front doit encore relier ses écrans aux routes de catalogues, profil,
+  historique, déblocage et talents, avec les jetons CSRF transmis par Symfony.
+- Une simulation de combat serveur, la validation indépendante de la victoire
+  contre Patient Zéro, la limitation des tentatives de connexion et la
+  récupération de mot de passe sont des évolutions hors du MVP actuel.

@@ -53,6 +53,17 @@ final class RunResultValidatorTest extends TestCase
         (new RunResultValidator())->validate($run, new FinishRunRequest(12, 20, 1, RunResult::Defeat), $finishAt);
     }
 
+    #[Test]
+    public function it_rejects_a_victory_that_the_server_cannot_verify(): void
+    {
+        $run = $this->createRun();
+        $finishAt = $run->getStartedAt()->modify('+900 seconds');
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('confirmée par une condition vérifiée côté serveur');
+        (new RunResultValidator())->validate($run, new FinishRunRequest(900, 20, 50, RunResult::Victory), $finishAt);
+    }
+
     private function createRun(): Run
     {
         $weapon = new Weapon(WeaponCode::Pistol, 'Pistolet', 'Test', 'targeted', 10, 1, 'Test', 100);

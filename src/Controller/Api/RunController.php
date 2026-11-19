@@ -12,6 +12,7 @@ use App\Entity\User;
 use App\Enum\CharacterCode;
 use App\Game\Run\DifficultyService;
 use App\Game\Run\RunService;
+use App\Game\Reward\UnlockService;
 use App\Repository\CharacterRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,6 +20,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 final class RunController extends AbstractController
 {
@@ -29,6 +31,7 @@ final class RunController extends AbstractController
         #[MapRequestPayload] StartRunRequest $payload,
         CharacterRepository $characters,
         DifficultyService $difficulties,
+        UnlockService $unlockService,
         RunService $runs,
     ): Response {
         if (!$this->isCsrfTokenValid('start-run', (string) $request->headers->get('X-CSRF-Token'))) {
@@ -50,6 +53,12 @@ final class RunController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
+        try {
+            $unlockService->assertUnlocked($user, $character);
+        } catch (\DomainException $exception) {
+            throw $this->createAccessDeniedException($exception->getMessage(), $exception);
+        }
+
         return $this->json(StartedRun::fromRun($runs->start($user, $character, $difficulties->get($payload->difficulty))), Response::HTTP_CREATED);
     }
 
@@ -69,7 +78,7 @@ final class RunController extends AbstractController
         try {
             return $this->json($runs->finish($user, $id, $payload));
         } catch (\DomainException $exception) {
-            throw $this->createBadRequestException($exception->getMessage(), $exception);
+            throw new BadRequestHttpException($exception->getMessage(), $exception);
         }
     }
 }

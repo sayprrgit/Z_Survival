@@ -33,4 +33,23 @@ final class RunRepository extends ServiceEntityRepository
 
         return $query->getOneOrNullResult();
     }
+
+    /** @return list<Run> */
+    public function findPageForUser(User $user, int $page, int $limit): array
+    {
+        return $this->createQueryBuilder('run')
+            ->andWhere('run.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('run.startedAt', 'DESC')
+            ->addOrderBy('run.id', 'DESC')
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function countForUser(User $user): int
+    {
+        return $this->count(['user' => $user]);
+    }
 }

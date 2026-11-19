@@ -145,4 +145,16 @@ final class User extends AbstractEntity implements UserInterface, PasswordAuthen
             ++$this->totalVictories;
         }
     }
+
+    public function spendScrap(int $amount): void
+    {
+        if ($amount < 0) {
+            throw new \InvalidArgumentException('Le montant à débiter ne peut pas être négatif.');
+        }
+        if ($this->scrap < $amount) {
+            throw new \DomainException('Tu n’as pas assez de ferraille.');
+        }
+
+        $this->scrap -= $amount;
+    }
 }
