@@ -1,0 +1,16 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Z_Survival — Partie{% endblock %}
+
+{% block body %}
+    <section class="game-ready">
+        <div class="deployment-stamp">SYSTÈME PRÊT</div>
+        <p class="eyebrow"><span class="status-dot"></span> Survivant verrouillé</p>
+        <h1>{{ character.name }}<br><em>est prêt.</em></h1>
+        <div class="loadout-row">
+            <span>{{ character.role }}</span><span>{{ character.startingWeaponLabel }}</span><span>{{ character.stats.maxHealth }} PV</span>
+        </div>
+        <p>Le terrain est chargé. Le moteur Canvas sera branché dans la prochaine étape ; ton survivant est déjà transmis par la session.</p>
+        <a class="button button-secondary" href="{{ path('character_index') }}"><span>Changer de survivant</span><b>↺</b></a>
+    </section>
+{% endblock %}
