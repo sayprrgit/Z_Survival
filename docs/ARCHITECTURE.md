@@ -1,14 +1,15 @@
-# Architecture initiale — Z_Survival
+# Architecture — Z_Survival
 
-Cette première itération installe le vocabulaire, les frontières du projet et le
-modèle Doctrine. Aucune migration, table ni route active n'est créée à ce stade.
+Le socle définit les frontières du projet et le modèle Doctrine. Le schéma MySQL
+est créé par migrations ; les routes métier et les services de jeu restent à
+compléter.
 
 | Zone | Responsabilité |
 | --- | --- |
 | `src/Entity` | Modèle Doctrine persistant : compte, catalogue, progression et historique des parties. |
 | `src/Game` | Services de domaine et définitions PHP du catalogue de jeu. |
 | `src/DTO` | Contrats d'entrée/sortie entre HTTP et le domaine. |
-| `src/Controller` | Futurs points d'entrée web et API, volontairement vides pour l'instant. |
+| `src/Controller` | Points d'entrée HTTP minces pour les interfaces et l'API. |
 | `assets/game` | Moteur Canvas local, séparé du backend Symfony. |
 
 Les classes de configuration (`WeaponDefinition`, `PowerUpDefinition`,
@@ -16,18 +17,21 @@ Les classes de configuration (`WeaponDefinition`, `PowerUpDefinition`,
 elles représentent le comportement/rôle d'un élément de jeu. Les entités
 correspondantes sont le catalogue persistant que Symfony transmettra au moteur.
 
-## Modèle de données prêt à migrer
+## Modèle de données
 
-Le collègue chargé de la base de données peut générer une migration à partir des
-entités et des relations suivantes :
+Les entités et relations persistées sont :
 
-| Table future | Rôle | Contraintes principales |
+| Table | Rôle | Contraintes principales |
 | --- | --- | --- |
 | `users` | Compte, authentification, ferraille et statistiques de profil | email unique |
 | `characters`, `weapons`, `power_ups`, `enemy_types`, `difficulties` | Catalogue de jeu | code unique |
 | `talents` | Arbre de talents | code unique, parent optionnel |
 | `user_talents`, `user_characters` | Progression permanente | unicité utilisateur/contenu |
 | `runs` | Historique des parties | relations vers utilisateur, personnage et difficulté |
+
+Doctrine utilise MySQL 8.4 avec InnoDB, UTF-8 (`utf8mb4`) et des migrations
+versionnées. La connexion WAMP locale est configurée dans `.env.local` ; le
+fichier `.env` contient les valeurs de développement génériques.
 
 Les types de catalogue et de cycle de vie sont des enums PHP : `CharacterCode`,
 `WeaponCode`, `PowerUpCode`, `EnemyCode`, `DifficultyCode`, `TalentBranch`,
@@ -43,9 +47,12 @@ duplication sans mélanger des concepts métier différents :
 - `AbstractUserAcquisition` : utilisateur propriétaire et date d'acquisition
   pour les contenus déverrouillés.
 
-## Étapes suivantes
+## État et étapes suivantes
 
-1. Générer puis relire la migration Doctrine avec le responsable BDD.
-2. Ajouter les fixtures du catalogue et les implémentations des factories.
+1. Le schéma initial est migré ; une migration renomme la colonne réservée
+   `range` en `attack_range` pour MySQL.
+2. Les fixtures chargent le catalogue complet décrit : quatre personnages, six
+   armes, huit power-ups, quatre zombies, deux boss, quinze talents et trois
+   difficultés.
 3. Créer l'authentification et les contrôleurs Twig/API avec leurs tests.
-4. Implémenter progressivement le moteur JavaScript et ses systèmes.
+4. Implémenter progressivement les factories et le moteur JavaScript.
