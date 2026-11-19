@@ -25,4 +25,10 @@ final class EnemyTypeRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /** @return list<EnemyType> */
+    public function findAllForGame(): array
+    {
+        return $this->findAllForShowcase();
+    }
 }

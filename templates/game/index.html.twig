@@ -2,10 +2,18 @@
 
 {% block title %}Z_Survival — Partie{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <meta name="turbo-cache-control" content="no-cache">
+{% endblock %}
+
 {% block body %}
     <section class="arena" data-game-root>
         <header class="arena-hud"><strong>{{ character.name }}</strong><span>Niveau <b data-level>1</b></span><span>Éliminations <b data-kills>0</b></span><span><b data-health>{{ character.baseHealth }}</b> PV</span><span><b data-time>00:00</b></span></header>
         <div class="health-track"><span data-health-bar></span></div>
+        <button class="arena-pause" type="button" data-game-pause aria-pressed="false">Pause</button>
+        <button class="arena-fullscreen" type="button" data-game-fullscreen aria-pressed="false">Plein écran</button>
+        <div class="arena-objective"><span>Vague <b data-wave>1</b></span><span data-objective>Tenir jusqu'à l'arrivée du Patient Zéro.</span></div>
         <canvas data-game-canvas aria-label="Jeu de survie. Déplacement avec ZQSD ou les flèches."></canvas>
         <p class="arena-help">Déplacement : ZQSD / WASD / flèches · Les armes tirent automatiquement · Récupère les orbes d’expérience</p>
         <div class="upgrade-overlay" data-upgrade hidden><div class="upgrade-dialog"><p class="eyebrow">NOUVEAU NIVEAU</p><h2>Choisis une amélioration</h2><div data-upgrade-options></div></div></div>

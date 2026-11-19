@@ -14,4 +14,13 @@ final class DifficultyRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Difficulty::class);
     }
+
+    /** @return list<Difficulty> */
+    public function findAllForGame(): array
+    {
+        return $this->createQueryBuilder('difficulty')
+            ->orderBy('difficulty.sortOrder', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

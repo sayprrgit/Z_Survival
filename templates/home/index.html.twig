@@ -40,6 +40,13 @@
                             <p class="passive"><span>Capacité passive</span>{{ character.passiveDescription }}</p>
                             <form action="{{ path('character_select', {code: character.code.value}) }}" method="post">
                                 <input type="hidden" name="_token" value="{{ csrf_token('select-character') }}">
+                                <label class="difficulty-picker">Difficulté
+                                    <select name="difficulty">
+                                        {% for difficulty in difficulties %}
+                                            <option value="{{ difficulty.code.value }}" {{ difficulty.code.value == selectedDifficultyCode ? 'selected' : '' }}>{{ difficulty.name }} ×{{ difficulty.multiplier }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </label>
                                 <button class="button" type="submit"><span>Déployer {{ character.name }}</span><b>→</b></button>
                             </form>
                         </div>

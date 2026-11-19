@@ -1,9 +1,9 @@
 export class UpgradeSystem {
-    constructor(state, onPauseChange) {
+    constructor(state, root) {
         this.state = state;
-        this.onPauseChange = onPauseChange;
-        this.root = document.querySelector('[data-upgrade]');
+        this.root = root.querySelector('[data-upgrade]');
         this.options = this.root.querySelector('[data-upgrade-options]');
+        this.active = false;
     }
 
     collectChoices() {
@@ -22,8 +22,9 @@ export class UpgradeSystem {
 
     open() {
         const choices = this.collectChoices();
-        if (!choices.length) { this.state.paused = false; return; }
-        this.state.paused = true;
+        if (!choices.length) { this.state.resume('upgrade'); return; }
+        this.active = true;
+        this.state.pause('upgrade');
         this.root.hidden = false;
         this.options.replaceChildren();
         for (const choice of choices) {
@@ -44,7 +45,7 @@ export class UpgradeSystem {
             if (choice.definition.effect === 'health_regeneration' && choice.definition.bonus > 0) this.state.player.health = Math.min(this.state.player.maxHealth, this.state.player.health + choice.definition.bonus * 5);
         }
         this.root.hidden = true;
-        this.state.paused = false;
-        this.onPauseChange?.(false);
+        this.active = false;
+        this.state.resume('upgrade');
     }
 }

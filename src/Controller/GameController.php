@@ -25,7 +25,7 @@ final class GameController extends AbstractController
 
         return $this->render('game/index.html.twig', [
             'character' => $selectedCharacter,
-            'gameConfiguration' => $configurationBuilder->build($selectedCharacter),
+            'gameConfiguration' => $configurationBuilder->build($selectedCharacter, (string) $request->getSession()->get('selected_difficulty', 'normal')),
         ]);
     }
 }
