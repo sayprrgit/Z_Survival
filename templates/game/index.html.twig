@@ -3,9 +3,10 @@
 {% block title %}Z_Survival — Partie{% endblock %}
 
 {% block body %}
-    <section class="arena" data-game-root>
+    <section class="arena" data-game-root data-api-start="{{ path('api_run_start') }}" data-api-runs="{{ path('api_run_start')|replace({'/start': ''}) }}" data-csrf-start="{{ csrf_token('start-run') }}" data-csrf-finish="{{ csrf_token('finish-run') }}">
         <header class="arena-hud"><strong>{{ character.name }}</strong><span>Niveau <b data-level>1</b></span><span>Éliminations <b data-kills>0</b></span><span><b data-health>{{ character.stats.maxHealth }}</b> PV</span><span><b data-time>00:00</b></span></header>
         <div class="health-track"><span data-health-bar></span></div>
+        <p class="run-status" data-run-status role="status">Préparation de la partie…</p>
         <canvas data-game-canvas aria-label="Jeu de survie. Déplacement avec ZQSD ou les flèches."></canvas>
         <p class="arena-help">Déplacement : ZQSD / WASD / flèches · Les armes tirent automatiquement · Récupère les orbes d’expérience</p>
         <div class="upgrade-overlay" data-upgrade hidden><div class="upgrade-dialog"><p class="eyebrow">NOUVEAU NIVEAU</p><h2>Choisis une amélioration</h2><div data-upgrade-options></div></div></div>

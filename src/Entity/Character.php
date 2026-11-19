@@ -99,4 +99,19 @@ final class Character extends AbstractCombatantCatalogItem
         $this->runs = new ArrayCollection();
         $this->userCharacters = new ArrayCollection();
     }
+
+    public function getCode(): CharacterCode
+    {
+        return $this->code;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getBaseHealth(): int
+    {
+        return $this->baseHealth;
+    }
 }

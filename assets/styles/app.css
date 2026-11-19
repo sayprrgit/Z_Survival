@@ -157,4 +157,14 @@ p { color: #b9c4b9; line-height: 1.6; }
 .upgrade-card small { color: var(--accent-bright); font-size: .63rem; font-weight: 800; letter-spacing: .1em; }
 .upgrade-card strong { font-size: 1.12rem; text-transform: uppercase; }
 .upgrade-card span { color: #b7bbb4; font-size: .75rem; }
+.auth-panel { width: min(520px, 100%); margin: clamp(3rem, 9vh, 7rem) auto; padding: clamp(1.5rem, 5vw, 3rem); border: 1px solid rgba(230,230,228,.26); background: #171918; }
+.auth-panel h1 { margin: .3rem 0 1.5rem; color: var(--paper); font-size: clamp(2.7rem, 9vw, 4.4rem); }
+.auth-panel p { color: #b7bbb4; }
+.auth-panel a { color: var(--accent-bright); }
+.auth-form { display: grid; gap: .7rem; margin: 1rem 0; }
+.auth-form label { margin-top: .45rem; color: #c2c4bd; font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.auth-form input:not([type=hidden]) { min-height: 2.8rem; padding: .6rem .75rem; border: 1px solid rgba(230,230,228,.25); background: #222623; color: var(--paper); font: inherit; }
+.auth-form .button { width: fit-content; margin-top: .6rem; }
+.nav-logout { display: inline-flex; margin: 0; }
+.nav-logout button { border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
 @media (max-width: 700px) { .arena-hud { flex-wrap: wrap; justify-content: flex-start; } [data-upgrade-options] { grid-template-columns: 1fr; } .upgrade-card { min-height: 0; } [data-game-canvas] { min-height: 55vh; } }

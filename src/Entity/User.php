@@ -10,9 +10,11 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity(repositoryClass: \App\Repository\UserRepository::class)]
 #[ORM\Table(name: 'users')]
+#[UniqueEntity(fields: ['email'], message: 'Cette adresse e-mail possède déjà un compte.')]
 final class User extends AbstractEntity implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Column(length: 180, unique: true)]
@@ -66,6 +68,11 @@ final class User extends AbstractEntity implements UserInterface, PasswordAuthen
         return $this->email;
     }
 
+    public function getEmail(): string
+    {
+        return $this->email;
+    }
+
     /** @return list<string> */
     public function getRoles(): array
     {
@@ -90,5 +97,52 @@ final class User extends AbstractEntity implements UserInterface, PasswordAuthen
 
     public function eraseCredentials(): void
     {
+    }
+
+    public function markLoginAt(\DateTimeImmutable $loggedInAt): void
+    {
+        $this->lastLoginAt = $loggedInAt;
+    }
+
+    public function getScrap(): int
+    {
+        return $this->scrap;
+    }
+
+    public function getTotalRuns(): int
+    {
+        return $this->totalRuns;
+    }
+
+    public function getTotalVictories(): int
+    {
+        return $this->totalVictories;
+    }
+
+    public function getTotalSurvivalSeconds(): int
+    {
+        return $this->totalSurvivalSeconds;
+    }
+
+    public function getBestSurvivalSeconds(): int
+    {
+        return $this->bestSurvivalSeconds;
+    }
+
+    public function getTotalKills(): int
+    {
+        return $this->totalKills;
+    }
+
+    public function recordRun(int $scrapEarned, int $survivalSeconds, int $kills, bool $victory): void
+    {
+        $this->scrap += $scrapEarned;
+        ++$this->totalRuns;
+        $this->totalSurvivalSeconds += $survivalSeconds;
+        $this->bestSurvivalSeconds = max($this->bestSurvivalSeconds, $survivalSeconds);
+        $this->totalKills += $kills;
+        if ($victory) {
+            ++$this->totalVictories;
+        }
     }
 }

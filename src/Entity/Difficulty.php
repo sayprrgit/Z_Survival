@@ -34,4 +34,19 @@ final class Difficulty extends AbstractCatalogItem
         $this->sortOrder = $sortOrder;
         $this->runs = new ArrayCollection();
     }
+
+    public function getCode(): DifficultyCode
+    {
+        return $this->code;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getMultiplier(): float
+    {
+        return $this->multiplier;
+    }
 }

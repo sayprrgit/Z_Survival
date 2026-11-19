@@ -1,0 +1,65 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Game;
+
+use App\DTO\FinishRunRequest;
+use App\Entity\Character;
+use App\Entity\Difficulty;
+use App\Entity\Run;
+use App\Entity\User;
+use App\Entity\Weapon;
+use App\Enum\CharacterCode;
+use App\Enum\DifficultyCode;
+use App\Enum\RunResult;
+use App\Enum\RunStatus;
+use App\Enum\WeaponCode;
+use App\Game\Run\RunResultValidator;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+final class RunResultValidatorTest extends TestCase
+{
+    #[Test]
+    public function it_accepts_reasonable_result_stats_within_elapsed_time(): void
+    {
+        $run = $this->createRun();
+        $validator = new RunResultValidator();
+        $finishAt = $run->getStartedAt()->modify('+15 seconds');
+
+        $validator->validate($run, new FinishRunRequest(12, 3, 8, RunResult::Defeat), $finishAt);
+
+        self::assertSame(RunStatus::Active, $run->getStatus());
+    }
+
+    #[Test]
+    public function it_rejects_a_client_reported_duration_ahead_of_server_time(): void
+    {
+        $run = $this->createRun();
+        $finishAt = $run->getStartedAt()->modify('+10 seconds');
+
+        $this->expectException(\DomainException::class);
+        (new RunResultValidator())->validate($run, new FinishRunRequest(30, 2, 5, RunResult::Defeat), $finishAt);
+    }
+
+    #[Test]
+    public function it_rejects_impossible_kill_and_level_totals(): void
+    {
+        $run = $this->createRun();
+        $finishAt = $run->getStartedAt()->modify('+15 seconds');
+
+        $this->expectException(\DomainException::class);
+        (new RunResultValidator())->validate($run, new FinishRunRequest(12, 20, 1, RunResult::Defeat), $finishAt);
+    }
+
+    private function createRun(): Run
+    {
+        $weapon = new Weapon(WeaponCode::Pistol, 'Pistolet', 'Test', 'targeted', 10, 1, 'Test', 100);
+        $character = new Character(CharacterCode::Mason, 'Mason', 'Test', 'Test', 100, $weapon);
+        $difficulty = new Difficulty(DifficultyCode::Normal, 'Normal', 'Test', 1, 1);
+        $user = new User('test@example.test', 'not-a-password-hash');
+
+        return new Run($user, $character, $difficulty);
+    }
+}

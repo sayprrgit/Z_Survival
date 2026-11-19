@@ -6,4 +6,7 @@ namespace App\Game\Reward;
 
 final readonly class Reward
 {
+    public function __construct(public int $scrap)
+    {
+    }
 }

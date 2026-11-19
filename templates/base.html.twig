@@ -23,6 +23,16 @@
             <a class="brand" href="{{ path('home') }}">Z_SURVIVAL</a>
             <nav aria-label="Navigation principale">
                 <a href="{{ path('character_index') }}">Personnages</a>
+                {% if app.user %}
+                    <span>{{ app.user.userIdentifier }}</span>
+                    <form action="{{ path('app_logout') }}" method="post" class="nav-logout">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+                        <button type="submit">Déconnexion</button>
+                    </form>
+                {% else %}
+                    <a href="{{ path('app_login') }}">Connexion</a>
+                    <a href="{{ path('app_register') }}">Créer un compte</a>
+                {% endif %}
             </nav>
         </header>
         <main class="page-content">

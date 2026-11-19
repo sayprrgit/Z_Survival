@@ -29,7 +29,7 @@ final readonly class GameConfigurationBuilder
         ], $this->powerUps->findBy([], ['code' => 'ASC']));
 
         return new GameConfiguration([
-            'name' => $character->name, 'weapon' => $character->startingWeapon->value,
+            'code' => $character->code->value, 'name' => $character->name, 'weapon' => $character->startingWeapon->value,
             'maxHealth' => $character->stats->maxHealth, 'damageBonus' => $character->stats->damageBonus / 100,
             'attackSpeedBonus' => $character->stats->attackSpeedBonus / 100, 'movementSpeedBonus' => $character->stats->movementSpeedBonus / 100,
             'criticalChanceBonus' => $character->stats->criticalChanceBonus / 100, 'damageReduction' => $character->stats->damageReduction / 100,

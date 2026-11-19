@@ -4,6 +4,7 @@ import { InputManager } from './InputManager.js';
 import { Enemy } from '../entities/Enemy.js';
 import { CombatSystem } from '../systems/CombatSystem.js';
 import { UpgradeSystem } from '../systems/UpgradeSystem.js';
+import { GameApi } from '../api/GameApi.js';
 
 export class Game {
     constructor(root, configuration) {
@@ -11,6 +12,8 @@ export class Game {
         this.canvas = root.querySelector('[data-game-canvas]');
         this.ctx = this.canvas.getContext('2d');
         this.state = new GameState(configuration);
+        this.api = new GameApi(root);
+        this.runId = null;
         this.input = new InputManager();
         this.combat = new CombatSystem();
         this.upgrades = new UpgradeSystem(this.state);
@@ -18,7 +21,21 @@ export class Game {
         this.resize = () => this.resizeCanvas();
         window.addEventListener('resize', this.resize);
         this.resizeCanvas();
-        this.loop.start();
+        this.render();
+        this.initializeRun();
+    }
+
+    async initializeRun() {
+        const status = this.root.querySelector('[data-run-status]');
+        try {
+            const run = await this.api.startRun({ character: this.state.configuration.player.code, difficulty: 'normal' });
+            this.runId = run.id;
+            status.hidden = true;
+            this.loop.start();
+        } catch (error) {
+            status.textContent = `Impossible de démarrer la partie : ${error.message}`;
+            status.classList.add('is-error');
+        }
     }
 
     resizeCanvas() {
@@ -120,5 +137,17 @@ export class Game {
         const panel=this.root.querySelector('[data-game-over]'); panel.hidden=false;
         this.root.querySelector('[data-end-title]').textContent='Fin de partie';
         this.root.querySelector('[data-end-stats]').textContent=`Survie : ${Math.floor(this.state.elapsed)} s · Éliminations : ${this.state.kills} · Niveau ${this.state.player.level}`;
+        if (this.runId !== null) {
+            this.api.finishRun(this.runId, {
+                survivalSeconds: Math.floor(this.state.elapsed),
+                reachedLevel: this.state.player.level,
+                kills: this.state.kills,
+                result: 'defeat',
+            }).then((summary) => {
+                this.root.querySelector('[data-end-stats]').textContent += ` · +${summary.scrapEarned} ferraille (solde ${summary.scrapBalance})`;
+            }).catch((error) => {
+                this.root.querySelector('[data-end-stats]').textContent += ` · Récompense non enregistrée : ${error.message}`;
+            });
+        }
     }
 }
