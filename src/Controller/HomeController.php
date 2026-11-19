@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Game\Character\CharacterFactory;
+use App\Repository\CharacterRepository;
+use App\Repository\EnemyTypeRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -13,10 +14,11 @@ use Symfony\Component\Routing\Attribute\Route;
 final class HomeController extends AbstractController
 {
     #[Route('/', name: 'home', methods: ['GET'])]
-    public function index(Request $request, CharacterFactory $characterFactory): Response
+    public function index(Request $request, CharacterRepository $characters, EnemyTypeRepository $enemyTypes): Response
     {
         return $this->render('home/index.html.twig', [
-            'characters' => $characterFactory->all(),
+            'characters' => $characters->findAllForSelection(),
+            'mobs' => $enemyTypes->findAllForShowcase(),
             'selectedCharacterCode' => $request->getSession()->get('selected_character'),
         ]);
     }

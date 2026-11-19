@@ -18,4 +18,9 @@ abstract class AbstractCombatantCatalogItem extends AbstractCatalogItem
         parent::__construct($name, $description);
         $this->baseHealth = $baseHealth;
     }
+
+    public function getBaseHealth(): int
+    {
+        return $this->baseHealth;
+    }
 }

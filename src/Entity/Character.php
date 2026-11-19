@@ -99,4 +99,59 @@ final class Character extends AbstractCombatantCatalogItem
         $this->runs = new ArrayCollection();
         $this->userCharacters = new ArrayCollection();
     }
+
+    public function getCode(): CharacterCode
+    {
+        return $this->code;
+    }
+
+    public function getPassiveDescription(): string
+    {
+        return $this->passiveDescription;
+    }
+
+    public function getStartingWeapon(): Weapon
+    {
+        return $this->startingWeapon;
+    }
+
+    public function getDamageBonus(): float
+    {
+        return $this->damageBonus;
+    }
+
+    public function getAttackSpeedBonus(): float
+    {
+        return $this->attackSpeedBonus;
+    }
+
+    public function getMovementSpeedBonus(): float
+    {
+        return $this->movementSpeedBonus;
+    }
+
+    public function getCriticalChanceBonus(): float
+    {
+        return $this->criticalChanceBonus;
+    }
+
+    public function getDamageReduction(): float
+    {
+        return $this->damageReduction;
+    }
+
+    public function getHealthRegeneration(): float
+    {
+        return $this->healthRegeneration;
+    }
+
+    public function getHealingEffectivenessBonus(): float
+    {
+        return $this->healingEffectivenessBonus;
+    }
+
+    public function getPortraitPath(): ?string
+    {
+        return $this->portraitPath;
+    }
 }

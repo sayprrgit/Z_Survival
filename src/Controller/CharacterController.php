@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Game\Character\CharacterFactory;
+use App\Repository\CharacterRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 final class CharacterController extends AbstractController
@@ -20,19 +19,19 @@ final class CharacterController extends AbstractController
     }
 
     #[Route('/characters/{code}/select', name: 'character_select', methods: ['POST'])]
-    public function select(string $code, Request $request, CharacterFactory $characterFactory): RedirectResponse
+    public function select(string $code, Request $request, CharacterRepository $characters): RedirectResponse
     {
         if (!$this->isCsrfTokenValid('select-character', (string) $request->request->get('_token'))) {
             throw $this->createAccessDeniedException('Jeton de sélection invalide.');
         }
 
-        $character = $characterFactory->findByValue($code);
+        $character = $characters->findOneByCodeValue($code);
         if ($character === null) {
             throw $this->createNotFoundException('Personnage introuvable.');
         }
 
-        $request->getSession()->set('selected_character', $character->code->value);
-        $this->addFlash('success', sprintf('%s est prêt à survivre.', $character->name));
+        $request->getSession()->set('selected_character', $character->getCode()->value);
+        $this->addFlash('success', sprintf('%s est prêt à survivre.', $character->getName()));
 
         return $this->redirectToRoute('game_index');
     }
