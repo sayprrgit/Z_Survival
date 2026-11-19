@@ -25,7 +25,7 @@ final class Weapon extends AbstractLevelableCatalogItem
     #[ORM\Column]
     private float $attackInterval;
 
-    #[ORM\Column(options: ['default' => 0])]
+    #[ORM\Column(name: 'attack_range', options: ['default' => 0])]
     private float $range = 0;
 
     #[ORM\Column(options: ['default' => 1])]
@@ -47,14 +47,29 @@ final class Weapon extends AbstractLevelableCatalogItem
     #[ORM\OneToMany(targetEntity: Character::class, mappedBy: 'startingWeapon')]
     private Collection $startingCharacters;
 
-    public function __construct(WeaponCode $code, string $name, string $description, string $attackType, float $baseDamage, float $attackInterval, string $maxUpgradeDescription)
-    {
+    public function __construct(
+        WeaponCode $code,
+        string $name,
+        string $description,
+        string $attackType,
+        float $baseDamage,
+        float $attackInterval,
+        string $maxUpgradeDescription,
+        float $range = 0,
+        int $projectileCount = 1,
+        int $pierceCount = 0,
+        float $areaOfEffect = 0,
+    ) {
         parent::__construct($name, $description);
         $this->code = $code;
         $this->attackType = $attackType;
         $this->baseDamage = $baseDamage;
         $this->attackInterval = $attackInterval;
         $this->maxUpgradeDescription = $maxUpgradeDescription;
+        $this->range = $range;
+        $this->projectileCount = $projectileCount;
+        $this->pierceCount = $pierceCount;
+        $this->areaOfEffect = $areaOfEffect;
         $this->startingCharacters = new ArrayCollection();
     }
 }

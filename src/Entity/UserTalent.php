@@ -7,7 +7,8 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
-#[ORM\Table(name: 'user_talents', uniqueConstraints: [new ORM\UniqueConstraint(name: 'uniq_user_talent', columns: ['user_id', 'talent_id'])])]
+#[ORM\Table(name: 'user_talents')]
+#[ORM\UniqueConstraint(name: 'uniq_user_talent', columns: ['user_id', 'talent_id'])]
 final class UserTalent extends AbstractUserAcquisition
 {
     #[ORM\ManyToOne(inversedBy: 'userTalents')]

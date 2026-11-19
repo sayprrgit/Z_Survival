@@ -53,22 +53,12 @@ final class User extends AbstractEntity implements UserInterface, PasswordAuthen
     #[ORM\OneToMany(targetEntity: Run::class, mappedBy: 'user')]
     private Collection $runs;
 
-    /** @var Collection<int, UserTalent> */
-    #[ORM\OneToMany(targetEntity: UserTalent::class, mappedBy: 'user')]
-    private Collection $userTalents;
-
-    /** @var Collection<int, UserCharacter> */
-    #[ORM\OneToMany(targetEntity: UserCharacter::class, mappedBy: 'user')]
-    private Collection $userCharacters;
-
     public function __construct(string $email, string $password)
     {
         $this->email = $email;
         $this->password = $password;
         $this->createdAt = new \DateTimeImmutable();
         $this->runs = new ArrayCollection();
-        $this->userTalents = new ArrayCollection();
-        $this->userCharacters = new ArrayCollection();
     }
 
     public function getUserIdentifier(): string
