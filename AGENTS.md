@@ -1,5 +1,56 @@
 # AGENTS.md
 
+# Z_Survival — règles de projet
+
+Le skill versionné du projet est [`skills/z-survival/SKILL.md`](skills/z-survival/SKILL.md).
+Le lire pour toute évolution du jeu, après les présentes règles.
+
+## Portée du produit
+
+- Le jeu est un roguelite solo navigateur. Le serveur prépare et valide une
+  partie ; le moteur Canvas JavaScript exécute la simulation temps réel.
+- Garder le MVP jouable en priorité. Ne pas ajouter de multijoueur, de moteur 3D,
+  de crafting, de monde ouvert ou de framework JavaScript.
+- Ne pas dupliquer les règles de jeu : les définitions et calculs persistants
+  vivent en PHP ; l'état éphémère de combat vit dans `assets/game/`.
+
+## Architecture Z_Survival
+
+- `src/Entity` contient exclusivement les entités Doctrine persistées.
+- `src/Game` contient le domaine applicatif : factories, services, contrats,
+  DTO de domaine et définitions de personnages, armes, ennemis et power-ups.
+- Les contrôleurs ne font que coordonner une requête, vérifier l'accès et
+  déléguer au domaine. Ils ne calculent ni récompense ni statistique.
+- Utiliser les enums PHP pour les catégories et statuts stables. Les données
+  équilibrables (dégâts, cadence, coûts) sont des configurations/fixtures, pas
+  des constantes dispersées dans les contrôleurs.
+- Les opérations d'achat de talent et de fin de partie doivent être atomiques,
+  idempotentes et vérifier que l'utilisateur possède la ressource/la partie.
+- La valeur envoyée par le navigateur pour le résultat d'une partie n'est jamais
+  fiable par défaut : valider ses bornes et l'état de la `Run` côté serveur.
+
+## Moteur JavaScript
+
+- Modules ES6 uniquement, sans dépendance de framework.
+- `Game` orchestre ; les systèmes ne se connaissent qu'au travers de `GameState`
+  et des contrats explicitement passés au constructeur.
+- Utiliser `requestAnimationFrame`, un pas de simulation borné, les distances au
+  carré et une grille spatiale avant toute optimisation prématurée.
+- Ne jamais faire d'appel HTTP dans la boucle de jeu. `GameApi` intervient au
+  démarrage et à la fin de la partie uniquement.
+- Toute logique ajoutée au moteur doit rester testable sans Canvas lorsque cela
+  est raisonnable ; `Renderer` est le seul propriétaire du contexte Canvas 2D.
+
+## Conventions de livraison
+
+- À chaque nouvelle entité Doctrine : ajouter migration, contrainte d'unicité
+  si nécessaire, fixture et test ciblé dans la même tâche.
+- À chaque nouvelle route d'écriture : protection CSRF, contrôle d'accès et test
+  fonctionnel. Les routes API retournent des DTO sérialisables, jamais une entité
+  Doctrine complète.
+- Laisser les squelettes sans logique tant qu'une itération ne demande pas le
+  comportement : cette base décrit les responsabilités, elle ne simule rien.
+
 This is a Symfony project. Check `composer.json` for the exact Symfony/PHP version
 in use, and read `symfony.lock` to see which recipes ran. Don't assume Doctrine,
 Twig, API Platform, Messenger, or Lock are installed unless one of those says so.
