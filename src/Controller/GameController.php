@@ -14,7 +14,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class GameController extends AbstractController
 {
-    private const PROGRESSION_KEY = 'talent_progression';
+    private const PROGRESSION_KEY = 'talent_progression_v2';
     #[Route('/game', name: 'game_index', methods: ['GET'])]
     public function index(Request $request, CharacterRepository $characters, GameConfigurationBuilder $configurationBuilder): Response
     {
@@ -48,5 +48,5 @@ final class GameController extends AbstractController
         return $this->json(['resources' => $resources, 'talents' => $talents]);
     }
 
-    private function progression(Request $request): array { $progression = $request->getSession()->get(self::PROGRESSION_KEY, ['resources' => 1000, 'talents' => []]); $progression['resources'] = max(1000, (int) ($progression['resources'] ?? 0)); $request->getSession()->set(self::PROGRESSION_KEY, $progression); return $progression; }
+    private function progression(Request $request): array { return $request->getSession()->get(self::PROGRESSION_KEY, ['resources' => 0, 'talents' => []]); }
 }

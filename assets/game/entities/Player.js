@@ -29,7 +29,7 @@ export class Player extends Actor {
     }
 
     get activeWeapon() { return this.weapons.get(this.activeWeaponCode); }
-    unlockWeapon(code) { this.unlockedWeapons.add(code); this.addWeapon(code); }
+    unlockWeapon(code) { this.unlockedWeapons.add(code); }
 
     switchWeapon(direction = 1) {
         const codes = [...this.weapons.keys()];
