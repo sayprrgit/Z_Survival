@@ -74,9 +74,10 @@ duplication sans mélanger des concepts métier différents :
 ## Limites et suite
 
 - Les statistiques de combat viennent du moteur dans le navigateur. Le serveur
-  vérifie les bornes reçues, mais ne rejoue pas les combats ; les résultats
-  restent donc fondés sur les données envoyées par le client. Les victoires sont
-  refusées tant qu'une condition de boss n'est pas confirmable côté serveur.
+  vérifie les bornes reçues, mais ne rejoue pas les combats. Pour déclarer une
+  victoire, le client doit envoyer `bossCode: "patient_zero"` et une durée d'au
+  moins 900 secondes. Cette validation écarte les résultats impossibles, mais
+  ne prouve pas à elle seule que le boss a réellement été vaincu.
 - Le front doit encore relier ses écrans aux routes de catalogues, profil,
   historique, déblocage et talents, avec les jetons CSRF transmis par Symfony.
 - Une simulation de combat serveur, la validation indépendante de la victoire

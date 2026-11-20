@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\DTO;
 
+use App\Enum\EnemyCode;
 use App\Enum\RunResult;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -18,6 +19,7 @@ final readonly class FinishRunRequest
         public int $kills,
         #[Assert\NotNull]
         public RunResult $result,
+        public ?EnemyCode $bossCode = null,
     ) {
     }
 }

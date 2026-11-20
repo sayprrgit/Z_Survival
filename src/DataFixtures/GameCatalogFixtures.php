@@ -175,7 +175,7 @@ final class GameCatalogFixtures extends Fixture
             [EnemyCode::Brute, 'Brute', 'Un zombie massif, lent et résistant.', 150, 24, 20, 28, 1.8, false, 2, 240, 20, 0.25, 3, 8],
             [EnemyCode::Spitter, 'Spitter', 'Un zombie qui attaque à distance.', 50, 12, 22, 180, 2.2, false, 2, 420, 12, 0.12, 2, 5],
             [EnemyCode::Colossus, 'Le Colosse', 'Un boss qui charge et frappe dans une large zone.', 1000, 35, 38, 42, 1.6, true, 0, 300, 100, 0, 0, 0],
-            [EnemyCode::PatientZero, 'Patient Zéro', 'Le boss final invoque des zombies et lance des attaques renforcées.', 4000, 40, 30, 220, 1.8, true, 0, 900, 250, 0, 0, 0],
+            [EnemyCode::PatientZero, 'Patient Zéro', 'Le boss final invoque des zombies et lance des attaques renforcées.', 4000, 40, 30, 220, 1.8, true, 0, EnemyCode::PATIENT_ZERO_AVAILABLE_FROM_SECONDS, 250, 0, 0, 0],
         ];
 
         foreach ($enemyTypes as [$code, $name, $description, $health, $damage, $speed, $range, $interval, $isBoss, $spawnWeight, $availableFrom, $experience, $scrapChance, $minimumScrap, $maximumScrap]) {

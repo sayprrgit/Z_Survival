@@ -12,6 +12,7 @@ use App\Entity\User;
 use App\Entity\Weapon;
 use App\Enum\CharacterCode;
 use App\Enum\DifficultyCode;
+use App\Enum\EnemyCode;
 use App\Enum\RunResult;
 use App\Enum\RunStatus;
 use App\Enum\WeaponCode;
@@ -54,14 +55,74 @@ final class RunResultValidatorTest extends TestCase
     }
 
     #[Test]
-    public function it_rejects_a_victory_that_the_server_cannot_verify(): void
+    public function it_rejects_a_victory_without_patient_zero_confirmation(): void
     {
         $run = $this->createRun();
         $finishAt = $run->getStartedAt()->modify('+900 seconds');
 
         $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('confirmée par une condition vérifiée côté serveur');
+        $this->expectExceptionMessage('confirmer la défaite de Patient Zéro');
         (new RunResultValidator())->validate($run, new FinishRunRequest(900, 20, 50, RunResult::Victory), $finishAt);
+    }
+
+    #[Test]
+    public function it_rejects_a_colossus_victory_as_the_final_result(): void
+    {
+        $run = $this->createRun();
+        $finishAt = $run->getStartedAt()->modify('+900 seconds');
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('confirmer la défaite de Patient Zéro');
+        (new RunResultValidator())->validate(
+            $run,
+            new FinishRunRequest(900, 20, 50, RunResult::Victory, EnemyCode::Colossus),
+            $finishAt,
+        );
+    }
+
+    #[Test]
+    public function it_rejects_a_patient_zero_victory_before_the_boss_is_available(): void
+    {
+        $run = $this->createRun();
+        $finishAt = $run->getStartedAt()->modify('+900 seconds');
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('qu’après 900 secondes');
+        (new RunResultValidator())->validate(
+            $run,
+            new FinishRunRequest(899, 20, 50, RunResult::Victory, EnemyCode::PatientZero),
+            $finishAt,
+        );
+    }
+
+    #[Test]
+    public function it_rejects_a_patient_zero_victory_before_server_elapsed_time(): void
+    {
+        $run = $this->createRun();
+        $finishAt = $run->getStartedAt()->modify('+899 seconds');
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('qu’après 900 secondes');
+        (new RunResultValidator())->validate(
+            $run,
+            new FinishRunRequest(900, 20, 50, RunResult::Victory, EnemyCode::PatientZero),
+            $finishAt,
+        );
+    }
+
+    #[Test]
+    public function it_accepts_a_patient_zero_victory_after_the_boss_is_available(): void
+    {
+        $run = $this->createRun();
+        $finishAt = $run->getStartedAt()->modify('+900 seconds');
+
+        (new RunResultValidator())->validate(
+            $run,
+            new FinishRunRequest(900, 20, 50, RunResult::Victory, EnemyCode::PatientZero),
+            $finishAt,
+        );
+
+        self::assertSame(RunStatus::Active, $run->getStatus());
     }
 
     private function createRun(): Run
