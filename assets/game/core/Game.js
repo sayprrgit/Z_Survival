@@ -10,9 +10,9 @@ import { LootSystem } from '../systems/LootSystem.js';
 import { MovementSystem } from '../systems/MovementSystem.js';
 import { SpawnSystem } from '../systems/SpawnSystem.js';
 import { UpgradeSystem } from '../systems/UpgradeSystem.js';
+import { SoundSystem } from '../systems/SoundSystem.js';
 import { Camera } from '../rendering/Camera.js';
 import { Renderer } from '../rendering/Renderer.js';
-import { ThreeRenderer } from '../rendering/ThreeRenderer.js';
 
 export class Game {
     constructor(root, configuration) {
@@ -20,7 +20,6 @@ export class Game {
         this.state = new GameState(configuration);
         this.api = new GameApi(root);
         this.runId = null;
-        this.input = new InputManager();
         this.difficulty = new DifficultySystem(configuration.difficulties, configuration.difficulty);
         this.movement = new MovementSystem();
         this.enemyAi = new EnemyAiSystem();
@@ -31,6 +30,9 @@ export class Game {
         this.spawner = new SpawnSystem(this.state, this.difficulty);
         this.upgrades = new UpgradeSystem(this.state, root);
         this.renderer = this.createRenderer(root.querySelector('[data-game-canvas]'));
+        this.canvas = this.renderer.canvas;
+        this.input = new InputManager(window, this.canvas);
+        this.sound = new SoundSystem();
         this.loop = new GameLoop((dt) => this.update(dt), () => this.renderer.render(this.state));
         this.pauseButton = root.querySelector('[data-game-pause]');
         this.fullscreenButton = root.querySelector('[data-game-fullscreen]');
@@ -61,18 +63,9 @@ export class Game {
     }
 
     createRenderer(canvas) {
-        try {
-            const renderer = new ThreeRenderer(canvas);
-            canvas.dataset.renderer = 'webgl';
-            return renderer;
-        } catch (error) {
-            console.warn('WebGL indisponible, activation du rendu isométrique.', error);
-            const fallback = canvas.cloneNode(false);
-            canvas.replaceWith(fallback);
-            fallback.dataset.renderer = 'canvas';
+        canvas.dataset.renderer = 'canvas';
 
-            return new Renderer(fallback, new Camera());
-        }
+        return new Renderer(canvas, new Camera());
     }
 
     async initializeRun() {
@@ -104,13 +97,17 @@ export class Game {
             return;
         }
         if (this.input.consume('switchWeapon')) state.player.switchWeapon();
+        const weaponSwitchDirection = this.input.consumeWeaponSwitchDirection();
+        if (weaponSwitchDirection) state.player.switchWeapon(weaponSwitchDirection);
         const weaponSlot = this.input.consumeWeaponSlot();
         if (weaponSlot !== null) state.player.selectWeapon([...state.player.weapons.keys()][weaponSlot]);
-        if (this.input.consume('reload')) state.player.reloadWeapon();
+        if (this.input.consume('reload') && state.player.reloadWeapon()) state.soundEvents.push({ type: 'reload' });
         if (this.input.consume('interact')) {
             const loot = this.loot.interact(state);
+            if (loot) state.soundEvents.push({ type: 'chest' });
             if (loot === 'upgrade') this.upgrades.open();
         }
+        this.sound.play(state.soundEvents);
         if (state.over || state.paused) {
             this.updateHud();
 
@@ -118,12 +115,13 @@ export class Game {
         }
 
         state.elapsed += dt;
+        this.updateAim();
         this.movement.update(state.player, this.input.vector(), dt);
         state.player.updateWeapons(dt);
         state.player.health = Math.min(state.player.maxHealth, state.player.health + state.player.regeneration * dt);
         this.spawner.update(dt, this.renderer.width, this.renderer.height);
         this.enemyAi.update(state, dt);
-        this.combat.update(state, dt);
+        this.combat.update(state, dt, this.input.isFiring());
         this.collision.update(state, dt);
         this.handleDefeatedEnemies(this.loot.rewardDefeatedEnemies(state));
         if (state.over) {
@@ -132,6 +130,7 @@ export class Game {
             return;
         }
         this.loot.update(state);
+        this.sound.play(state.soundEvents);
         if (state.pendingUpgradeDrops > 0 && !this.upgrades.active) {
             state.pendingUpgradeDrops--;
             this.upgrades.open();
@@ -148,6 +147,43 @@ export class Game {
             if (enemy.code === this.state.finalBossCode) this.end('victory');
             else if (enemy.isBoss) this.state.objective = `Boss neutralisé. Tiens jusqu'à ${this.formatTime(this.state.finalBossAvailableAt)}.`;
         }
+    }
+
+    updateAim() {
+        const pointer = this.input.pointer();
+        if (!pointer) { this.state.player.aimPreview = null; return; }
+        const target = this.renderer.screenToWorld?.(pointer.x, pointer.y);
+        if (!target) { this.state.player.aimPreview = null; return; }
+        const dx = target.x - this.state.player.x;
+        const dy = target.y - this.state.player.y;
+        const length = Math.hypot(dx, dy);
+        if (length < 1) return;
+        this.state.player.aim = { x: dx / length, y: dy / length };
+        this.state.player.aimTarget = target;
+        this.updateAimPreview();
+    }
+
+    updateAimPreview() {
+        const { player, enemies, definitions } = this.state;
+        const weapon = definitions.weaponsByCode.get(player.activeWeaponCode);
+        const range = weapon?.range ?? 260;
+        const spread = weapon?.attackType === 'spread';
+        let hit = null;
+        let closest = range;
+        for (const enemy of enemies) {
+            if (enemy.dead) continue;
+            const dx = enemy.x - player.x;
+            const dy = enemy.y - player.y;
+            const distance = dx * player.aim.x + dy * player.aim.y;
+            if (distance < 0 || distance > closest) continue;
+            const lateral = Math.abs(dx * player.aim.y - dy * player.aim.x);
+            const width = enemy.radius + (spread ? distance * Math.tan(Math.PI / 8) : 8);
+            if (lateral > width) continue;
+            hit = enemy;
+            closest = distance;
+        }
+        const distance = hit ? closest : range;
+        player.aimPreview = { x: player.x + player.aim.x * distance, y: player.y + player.aim.y * distance, hit: Boolean(hit) };
     }
 
     togglePause() {
@@ -201,6 +237,8 @@ export class Game {
         this.state.over = true;
         this.state.result = result;
         this.state.pause('end');
+        this.state.soundEvents.push({ type: result === 'victory' ? 'loot' : 'explosion' });
+        this.sound.play(this.state.soundEvents);
         const panel = this.root.querySelector('[data-game-over]');
         if (panel) panel.hidden = false;
         this.setText('[data-end-kicker]', result === 'victory' ? 'MISSION RÉUSSIE' : 'SURVIVANT PERDU');

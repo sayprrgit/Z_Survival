@@ -12,6 +12,7 @@ import { MovementSystem } from '../assets/game/systems/MovementSystem.js';
 import { Projectile } from '../assets/game/entities/Projectile.js';
 import { Camera } from '../assets/game/rendering/Camera.js';
 import { Renderer } from '../assets/game/rendering/Renderer.js';
+import { InputManager } from '../assets/game/core/InputManager.js';
 
 const weaponCodes = ['pistol', 'assault_rifle', 'shotgun', 'mace', 'knife', 'molotov'];
 const powerUps = [
@@ -35,6 +36,23 @@ function configuration() {
         difficulty: 'normal',
     };
 }
+
+test('weapon shortcuts use physical number keys on AZERTY and numpad keyboards', () => {
+    const listeners = new Map();
+    const target = { addEventListener: (type, callback) => listeners.set(type, callback), removeEventListener: () => {} };
+    const input = new InputManager(target);
+    let prevented = false;
+    listeners.get('keydown')({ key: '&', code: 'Digit1', preventDefault: () => { prevented = true; } });
+    assert.equal(input.consumeWeaponSlot(), 0);
+    assert.equal(prevented, true);
+    listeners.get('keydown')({ key: '4', code: 'Numpad4', preventDefault: () => {} });
+    assert.equal(input.consumeWeaponSlot(), 3);
+    listeners.get('wheel')({ deltaY: -12, preventDefault: () => { prevented = true; } });
+    assert.equal(input.consumeWeaponSwitchDirection(), -1);
+    listeners.get('wheel')({ deltaY: 12, preventDefault: () => {} });
+    assert.equal(input.consumeWeaponSwitchDirection(), 1);
+    input.destroy();
+});
 
 test('configuration exposes every catalog weapon and power-up', () => {
     const state = new GameState(configuration());
@@ -80,10 +98,10 @@ test('each of the six weapons executes its configured attack style', () => {
         state.player.activeWeaponCode = code;
         const target = new Enemy(25, 0, config.enemies[0]);
         state.enemies.push(target);
-        new CombatSystem().update(state, 0.01);
+        new CombatSystem().update(state, 0.01, true);
         if (['targeted', 'rapid', 'spread'].includes(attackType)) assert.ok(state.projectiles.length > 0, `${code} should launch projectiles`);
         if (attackType === 'melee_area' || attackType === 'melee') assert.ok(target.health < target.maxHealth, `${code} should hit immediately`);
-        if (attackType === 'area_damage') assert.equal(state.fireZones.length, 1, `${code} should create a damage zone`);
+        if (attackType === 'area_damage') assert.equal(state.projectiles.length, 1, `${code} should launch its delayed explosive`);
     }
 });
 
@@ -101,6 +119,12 @@ test('spawn system uses catalog availability, weight and boss timing', () => {
     assert.equal(state.bossesSpawned.has('colossus'), true);
     assert.equal(state.enemies.some((enemy) => enemy.code === 'colossus' && enemy.isBoss), true);
     assert.equal(state.finalBossCode, 'patient_zero');
+
+    state.enemies = Array.from({ length: 80 }, () => new Enemy(0, 0, state.definitions.enemiesByCode.get('walker')));
+    state.wave = 1;
+    state.spawnTimer = 0;
+    spawner.update(0.1, 900, 600);
+    assert.equal(state.enemies.length, 80);
 });
 
 test('difficulty drives waves and increases threat over time', () => {

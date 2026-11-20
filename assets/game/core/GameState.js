@@ -21,6 +21,7 @@ export class GameState {
         this.orbs = [];
         this.fireZones = [];
         this.messages = [];
+        this.soundEvents = [];
         this.elapsed = 0;
         this.kills = 0;
         this.spawnTimer = 0;

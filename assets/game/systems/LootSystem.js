@@ -29,11 +29,11 @@ export class LootSystem {
         const player = state.player;
         const closest = state.chests.filter((chest) => !chest.opened).sort((first, second) => this.distanceSquared(player, first) - this.distanceSquared(player, second))[0];
         if (!closest || this.distanceSquared(player, closest) > 58 ** 2) return null;
-        if ('opened' in closest) closest.opened = true;
+        if ('opened' in closest) { closest.opened = true; closest.openedAt = state.elapsed; }
         else closest.collected = true;
         if (closest.type === 'ammo') { player.addAmmo(closest.amount ?? 18); return 'ammo'; }
         if (closest.type === 'weapon') {
-            const candidates = [...state.definitions.weaponsByCode.keys()].filter((code) => !player.weapons.has(code));
+            const candidates = [...state.definitions.weaponsByCode.keys()].filter((code) => player.unlockedWeapons.has(code) && !player.weapons.has(code));
             if (candidates.length) player.addWeapon(candidates[Math.floor(Math.random() * candidates.length)]);
             else player.addAmmo(20);
             return 'weapon';
@@ -45,17 +45,17 @@ export class LootSystem {
 
     update(state) {
         for (const drop of state.drops) {
-            if (drop.collected || this.distanceSquared(state.player, drop) > 58 ** 2) continue;
+            if (drop.collected || this.distanceSquared(state.player, drop) > (state.player.pickupRadius ?? 58) ** 2) continue;
             drop.collected = true;
-            if (drop.type === 'ammo') state.player.addAmmo(drop.amount ?? 8);
+            if (drop.type === 'ammo') { state.player.addAmmo(drop.amount ?? 8); state.soundEvents.push({ type: 'loot' }); }
             else if (drop.type === 'weapon') {
-                const candidates = [...state.definitions.weaponsByCode.keys()].filter((code) => !state.player.weapons.has(code));
+                const candidates = [...state.definitions.weaponsByCode.keys()].filter((code) => state.player.unlockedWeapons.has(code) && !state.player.weapons.has(code));
                 if (candidates.length) state.player.addWeapon(candidates[Math.floor(Math.random() * candidates.length)]);
                 else state.player.addAmmo(20);
             } else if (this.claimUpgrade(state)) state.pendingUpgradeDrops++;
             else state.player.addAmmo(6);
         }
-        state.chests = state.chests.filter((chest) => !chest.opened);
+        state.chests = state.chests.filter((chest) => !chest.opened || state.elapsed - chest.openedAt < .55);
         state.drops = state.drops.filter((drop) => !drop.collected);
     }
 

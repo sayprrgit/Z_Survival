@@ -20,7 +20,7 @@
         <div class="arena-augments" data-augments aria-label="Augmentations actives"></div>
         <div class="arena-loot-key"><span class="loot-ammo">BLEU · munitions</span><span class="loot-weapon">OR · arme</span><span class="loot-upgrade">VIOLET · augmentation</span><span class="loot-chest">COFFRE · E pour ouvrir</span></div>
         <canvas data-game-canvas aria-label="Jeu de survie. Déplacement avec ZQSD ou les flèches."></canvas>
-        <p class="arena-help">Déplacement : ZQSD / WASD / flèches · 1–6 ou clic : changer d’arme · X : arme suivante · R : recharger · E : ouvrir un coffre</p>
+        <p class="arena-help">Déplacement : ZQSD / WASD / flèches · souris : viser · clic gauche : tirer · 1–6 ou molette : changer d’arme · X : arme suivante · R : recharger · E : ouvrir un coffre</p>
         <div class="upgrade-overlay" data-upgrade hidden><div class="upgrade-dialog"><p class="eyebrow">COFFRE OUVERT</p><h2>Choisis une amélioration</h2><div data-upgrade-options></div></div></div>
         <div class="upgrade-overlay" data-game-over hidden><div class="upgrade-dialog"><p class="eyebrow">PARTIE TERMINÉE</p><h2 data-end-title></h2><p data-end-stats></p><a class="button button-secondary" href="{{ path('character_index') }}">Retour au choix du survivant</a></div></div>
         <script type="application/json" data-game-config>{{ gameConfiguration|json_encode(constant('JSON_HEX_TAG') b-or constant('JSON_HEX_APOS') b-or constant('JSON_HEX_AMP') b-or constant('JSON_HEX_QUOT'))|raw }}</script>

@@ -36,13 +36,20 @@ export class Renderer {
         this.drawGround(state.elapsed);
         this.drawFireZones(state.fireZones);
         this.drawLoot(state.chests, state.drops, state.elapsed);
+        this.drawAimGuide(state.player);
         this.drawProjectiles(state.projectiles);
         this.drawActors(state);
-        this.drawExperienceBar(state.player);
         if (state.paused && !state.over) this.drawPause();
     }
 
     project(entity) { return this.projection.project(entity.x, entity.y, this.camera); }
+
+    screenToWorld(clientX, clientY) {
+        const box = this.canvas.getBoundingClientRect();
+        const screenX = clientX - box.left - this.width / 2;
+        const screenY = clientY - box.top - this.height / 2;
+        return { x: this.camera.x + screenX + screenY * 2, y: this.camera.y - screenX + screenY * 2 };
+    }
 
     drawGround(elapsed) {
         const { ctx } = this;
@@ -114,7 +121,7 @@ export class Renderer {
     }
 
     drawWeaponEffect(player, at, elapsed) {
-        const weapon = player.base.weapon;
+        const weapon = player.activeWeaponCode;
         const facing = player.aim ?? player.facing;
         const direction = this.projection.project(player.x + facing.x * 45, player.y + facing.y * 45, this.camera);
         const muzzleX = at.x + (direction.x - at.x) * .75;
@@ -123,15 +130,17 @@ export class Renderer {
             this.ctx.strokeStyle = weapon === 'mace' ? '#bcb7aa' : '#e8ddd1'; this.ctx.lineWidth = weapon === 'mace' ? 6 : 3; this.ctx.beginPath(); this.ctx.moveTo(at.x, at.y - 36); this.ctx.lineTo(muzzleX, muzzleY); this.ctx.stroke();
             return;
         }
+        this.ctx.strokeStyle = weapon === 'molotov' ? '#9a3d25' : '#202a2d'; this.ctx.lineWidth = weapon === 'shotgun' ? 7 : 5; this.ctx.lineCap = 'round'; this.ctx.beginPath(); this.ctx.moveTo(at.x + (muzzleX - at.x) * .18, at.y - 34 + (muzzleY - at.y + 34) * .18); this.ctx.lineTo(muzzleX, muzzleY); this.ctx.stroke(); this.ctx.lineCap = 'butt';
         this.ctx.fillStyle = weapon === 'molotov' ? '#ef713f' : '#f5d36d'; this.ctx.shadowColor = this.ctx.fillStyle; this.ctx.shadowBlur = 12 + Math.sin(elapsed * 8) * 4; this.ctx.beginPath(); this.ctx.arc(muzzleX, muzzleY, weapon === 'molotov' ? 5 : 3, 0, Math.PI * 2); this.ctx.fill(); this.ctx.shadowBlur = 0;
+        if (player.attackFlash > 0 && weapon !== 'molotov') { this.ctx.fillStyle = '#fff0ae'; this.ctx.beginPath(); this.ctx.arc(muzzleX, muzzleY, 7 + player.attackFlash * 20, 0, Math.PI * 2); this.ctx.fill(); }
     }
 
     drawHealthBar(at, enemy) { const { ctx } = this; const width = enemy.isBoss ? 74 : 42; ctx.fillStyle = 'rgba(15,8,8,.85)'; ctx.fillRect(at.x - width / 2, at.y - enemy.radius - 18, width, 5); ctx.fillStyle = enemy.isBoss ? '#f29a52' : '#da5b57'; ctx.fillRect(at.x - width / 2, at.y - enemy.radius - 18, width * Math.max(0, enemy.health / enemy.maxHealth), 5); if (enemy.isBoss) { ctx.fillStyle = '#f5e5cb'; ctx.font = '700 11px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(enemy.name, at.x, at.y - enemy.radius - 24); } }
     drawFireZones(zones) { for (const zone of zones) { const at = this.project(zone); const glow = this.ctx.createRadialGradient(at.x, at.y, 2, at.x, at.y, zone.radius * .7); glow.addColorStop(0, 'rgba(255,237,124,.76)'); glow.addColorStop(.45, 'rgba(240,91,42,.42)'); glow.addColorStop(1, 'rgba(112,20,12,0)'); this.ctx.fillStyle = glow; this.ctx.beginPath(); this.ctx.ellipse(at.x, at.y, zone.radius, zone.radius * .42, 0, 0, Math.PI * 2); this.ctx.fill(); } }
     drawOrbs(orbs, elapsed) { for (const orb of orbs) { const at = this.project(orb); this.ctx.fillStyle = '#96f4cb'; this.ctx.shadowColor = '#69e6b3'; this.ctx.shadowBlur = 18; this.ctx.beginPath(); this.ctx.arc(at.x, at.y - 5 + Math.sin(elapsed * 5 + orb.x) * 2, orb.radius, 0, Math.PI * 2); this.ctx.fill(); this.ctx.shadowBlur = 0; } }
-    drawLoot(chests, drops, elapsed) { for (const chest of chests) { const at = this.project(chest); this.ctx.fillStyle = chest.type === 'ammo' ? '#4b8cbb' : '#c18a32'; this.ctx.fillRect(at.x - 10, at.y - 14, 20, 13); } for (const drop of drops) { const at = this.project(drop); this.ctx.fillStyle = drop.type === 'ammo' ? '#75b8e8' : drop.type === 'weapon' ? '#f1b65e' : '#d58aff'; this.ctx.beginPath(); this.ctx.arc(at.x, at.y - 10 + Math.sin(elapsed * 5) * 2, 7, 0, Math.PI * 2); this.ctx.fill(); } }
-    drawProjectiles(projectiles) { for (const shot of projectiles) { const at = this.project(shot); const past = this.projection.project(shot.x - shot.vx * .035, shot.y - shot.vy * .035, this.camera); this.ctx.strokeStyle = shot.color; this.ctx.lineWidth = Math.max(2, shot.radius / 2); this.ctx.beginPath(); this.ctx.moveTo(past.x, past.y); this.ctx.lineTo(at.x, at.y); this.ctx.stroke(); this.ctx.fillStyle = shot.color; this.ctx.beginPath(); this.ctx.arc(at.x, at.y, shot.radius, 0, Math.PI * 2); this.ctx.fill(); } }
+    drawLoot(chests, drops, elapsed) { for (const chest of chests) { const at = this.project(chest); const color = chest.type === 'ammo' ? '#4b8cbb' : '#c18a32'; const opening = chest.opened ? Math.min(1, (elapsed - chest.openedAt) / .35) : 0; this.ctx.fillStyle = '#382817'; this.ctx.fillRect(at.x - 14, at.y - 11, 28, 15); this.ctx.fillStyle = color; this.ctx.fillRect(at.x - 12, at.y - 9, 24, 11); this.ctx.fillStyle = '#f3ce75'; this.ctx.fillRect(at.x - 2, at.y - 9, 4, 11); this.ctx.fillStyle = color; this.ctx.fillRect(at.x - 13, at.y - 16 - opening * 12, 26, 7); } for (const drop of drops) { const at = this.project(drop); const color = drop.type === 'ammo' ? '#75b8e8' : drop.type === 'weapon' ? '#f1b65e' : '#d58aff'; this.ctx.fillStyle = '#101617'; this.ctx.beginPath(); this.ctx.arc(at.x, at.y - 10, 10, 0, Math.PI * 2); this.ctx.fill(); this.ctx.fillStyle = color; this.ctx.beginPath(); this.ctx.arc(at.x, at.y - 10 + Math.sin(elapsed * 5) * 2, 6, 0, Math.PI * 2); this.ctx.fill(); } }
+    drawAimGuide(player) { const preview = player.aimPreview; if (!preview) return; const start = this.project(player); const end = this.project(preview); const color = preview.hit ? '#89f2a2' : '#f5bb69'; this.ctx.strokeStyle = color; this.ctx.globalAlpha = .72; this.ctx.lineWidth = 1.5; this.ctx.setLineDash([5, 7]); this.ctx.beginPath(); this.ctx.moveTo(start.x, start.y - 26); this.ctx.lineTo(end.x, end.y); this.ctx.stroke(); this.ctx.setLineDash([]); this.ctx.beginPath(); this.ctx.arc(end.x, end.y, preview.hit ? 11 : 8, 0, Math.PI * 2); this.ctx.stroke(); this.ctx.globalAlpha = 1; }
+    drawProjectiles(projectiles) { for (const shot of projectiles) { const at = this.project(shot); const past = shot.instant ? this.projection.project(shot.originX, shot.originY, this.camera) : this.projection.project(shot.x - shot.vx * .025, shot.y - shot.vy * .025, this.camera); this.ctx.save(); this.ctx.strokeStyle = shot.color; this.ctx.shadowColor = shot.color; this.ctx.shadowBlur = 7; this.ctx.lineWidth = Math.max(1.5, shot.radius / 2); this.ctx.beginPath(); this.ctx.moveTo(past.x, past.y); this.ctx.lineTo(at.x, at.y); this.ctx.stroke(); this.ctx.fillStyle = '#fff8d4'; this.ctx.beginPath(); this.ctx.arc(at.x, at.y, shot.radius, 0, Math.PI * 2); this.ctx.fill(); this.ctx.restore(); } }
     drawShadow(x, y, radius) { this.ctx.fillStyle = 'rgba(0,0,0,.48)'; this.ctx.beginPath(); this.ctx.ellipse(x, y + 5, radius * .9, radius * .35, 0, 0, Math.PI * 2); this.ctx.fill(); }
-    drawExperienceBar(player) { this.ctx.fillStyle = 'rgba(0,0,0,.55)'; this.ctx.fillRect(0, this.height - 6, this.width, 6); this.ctx.fillStyle = '#69d1b0'; this.ctx.fillRect(0, this.height - 6, this.width * Math.min(1, player.xp / player.xpToNext), 6); }
     drawPause() { this.ctx.fillStyle = 'rgba(7,8,8,.5)'; this.ctx.fillRect(0, 0, this.width, this.height); this.ctx.fillStyle = '#f0eee9'; this.ctx.font = '700 22px sans-serif'; this.ctx.textAlign = 'center'; this.ctx.fillText('PAUSE', this.width / 2, this.height / 2); }
 }
