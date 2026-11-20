@@ -19,24 +19,17 @@ export class CollisionSystem {
     }
 
     updateProjectiles(state, dt) {
+        let writeIndex = 0;
         for (const projectile of state.projectiles) {
             if (projectile.dead) continue;
             projectile.x += projectile.vx * dt;
             projectile.y += projectile.vy * dt;
             projectile.lifetime -= dt;
             if (projectile.lifetime <= 0) { projectile.dead = true; continue; }
-            for (const enemy of this.nearby(projectile.x, projectile.y)) {
-                if (enemy.dead || projectile.hit.has(enemy)) continue;
-                const radius = enemy.radius + projectile.radius;
-                const dx = enemy.x - projectile.x;
-                const dy = enemy.y - projectile.y;
-                if (dx * dx + dy * dy > radius * radius) continue;
-                enemy.takeDamage(projectile.damage);
-                projectile.hit.add(enemy);
-                if (projectile.pierce-- <= 0) { projectile.dead = true; break; }
-            }
+            this.hitProjectile(projectile);
+            if (!projectile.dead) state.projectiles[writeIndex++] = projectile;
         }
-        state.projectiles = state.projectiles.filter((projectile) => !projectile.dead);
+        state.projectiles.length = writeIndex;
     }
 
     updateFireZones(state, dt) {
@@ -53,6 +46,26 @@ export class CollisionSystem {
             }
         }
         state.fireZones = state.fireZones.filter((zone) => zone.duration > 0);
+    }
+
+    hitProjectile(projectile) {
+        const cellRadius = 1;
+        const originX = Math.floor(projectile.x / this.cellSize);
+        const originY = Math.floor(projectile.y / this.cellSize);
+        for (let offsetX = -cellRadius; offsetX <= cellRadius && !projectile.dead; offsetX++) for (let offsetY = -cellRadius; offsetY <= cellRadius && !projectile.dead; offsetY++) {
+            const cell = this.cells.get(`${originX + offsetX}:${originY + offsetY}`);
+            if (!cell) continue;
+            for (const enemy of cell) {
+                if (enemy.dead || projectile.hit.has(enemy)) continue;
+                const radius = enemy.radius + projectile.radius;
+                const dx = enemy.x - projectile.x;
+                const dy = enemy.y - projectile.y;
+                if (dx * dx + dy * dy > radius * radius) continue;
+                enemy.takeDamage(projectile.damage);
+                projectile.hit.add(enemy);
+                if (projectile.pierce-- <= 0) { projectile.dead = true; break; }
+            }
+        }
     }
 
     nearby(x, y, radius = this.cellSize) {

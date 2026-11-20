@@ -10,14 +10,14 @@ export class DifficultySystem {
     }
 
     waveAt(elapsed) {
-        return 1 + Math.floor(elapsed / 30);
+        return 1 + Math.floor(elapsed / 45);
     }
 
     enemyScaleAt(elapsed) {
-        return Math.min(3, (1 + elapsed / 500) * this.multiplier);
+        return Math.min(2.5, (1 + elapsed / 720) * this.multiplier);
     }
 
     spawnIntervalAt(elapsed) {
-        return Math.max(0.2, 0.95 / (1 + elapsed / 210) / this.multiplier);
+        return Math.max(0.35, 1.25 / (1 + elapsed / 300) / this.multiplier);
     }
 }

@@ -35,7 +35,7 @@ export class Renderer {
         ctx.clearRect(0, 0, this.width, this.height);
         this.drawGround(state.elapsed);
         this.drawFireZones(state.fireZones);
-        this.drawOrbs(state.orbs, state.elapsed);
+        this.drawLoot(state.chests, state.drops, state.elapsed);
         this.drawProjectiles(state.projectiles);
         this.drawActors(state);
         this.drawExperienceBar(state.player);
@@ -115,7 +115,8 @@ export class Renderer {
 
     drawWeaponEffect(player, at, elapsed) {
         const weapon = player.base.weapon;
-        const direction = this.projection.project(player.x + player.facing.x * 45, player.y + player.facing.y * 45, this.camera);
+        const facing = player.aim ?? player.facing;
+        const direction = this.projection.project(player.x + facing.x * 45, player.y + facing.y * 45, this.camera);
         const muzzleX = at.x + (direction.x - at.x) * .75;
         const muzzleY = at.y - 32 + (direction.y - at.y) * .35;
         if (weapon === 'mace' || weapon === 'knife') {
@@ -128,6 +129,7 @@ export class Renderer {
     drawHealthBar(at, enemy) { const { ctx } = this; const width = enemy.isBoss ? 74 : 42; ctx.fillStyle = 'rgba(15,8,8,.85)'; ctx.fillRect(at.x - width / 2, at.y - enemy.radius - 18, width, 5); ctx.fillStyle = enemy.isBoss ? '#f29a52' : '#da5b57'; ctx.fillRect(at.x - width / 2, at.y - enemy.radius - 18, width * Math.max(0, enemy.health / enemy.maxHealth), 5); if (enemy.isBoss) { ctx.fillStyle = '#f5e5cb'; ctx.font = '700 11px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(enemy.name, at.x, at.y - enemy.radius - 24); } }
     drawFireZones(zones) { for (const zone of zones) { const at = this.project(zone); const glow = this.ctx.createRadialGradient(at.x, at.y, 2, at.x, at.y, zone.radius * .7); glow.addColorStop(0, 'rgba(255,237,124,.76)'); glow.addColorStop(.45, 'rgba(240,91,42,.42)'); glow.addColorStop(1, 'rgba(112,20,12,0)'); this.ctx.fillStyle = glow; this.ctx.beginPath(); this.ctx.ellipse(at.x, at.y, zone.radius, zone.radius * .42, 0, 0, Math.PI * 2); this.ctx.fill(); } }
     drawOrbs(orbs, elapsed) { for (const orb of orbs) { const at = this.project(orb); this.ctx.fillStyle = '#96f4cb'; this.ctx.shadowColor = '#69e6b3'; this.ctx.shadowBlur = 18; this.ctx.beginPath(); this.ctx.arc(at.x, at.y - 5 + Math.sin(elapsed * 5 + orb.x) * 2, orb.radius, 0, Math.PI * 2); this.ctx.fill(); this.ctx.shadowBlur = 0; } }
+    drawLoot(chests, drops, elapsed) { for (const chest of chests) { const at = this.project(chest); this.ctx.fillStyle = chest.type === 'ammo' ? '#4b8cbb' : '#c18a32'; this.ctx.fillRect(at.x - 10, at.y - 14, 20, 13); } for (const drop of drops) { const at = this.project(drop); this.ctx.fillStyle = drop.type === 'ammo' ? '#75b8e8' : drop.type === 'weapon' ? '#f1b65e' : '#d58aff'; this.ctx.beginPath(); this.ctx.arc(at.x, at.y - 10 + Math.sin(elapsed * 5) * 2, 7, 0, Math.PI * 2); this.ctx.fill(); } }
     drawProjectiles(projectiles) { for (const shot of projectiles) { const at = this.project(shot); const past = this.projection.project(shot.x - shot.vx * .035, shot.y - shot.vy * .035, this.camera); this.ctx.strokeStyle = shot.color; this.ctx.lineWidth = Math.max(2, shot.radius / 2); this.ctx.beginPath(); this.ctx.moveTo(past.x, past.y); this.ctx.lineTo(at.x, at.y); this.ctx.stroke(); this.ctx.fillStyle = shot.color; this.ctx.beginPath(); this.ctx.arc(at.x, at.y, shot.radius, 0, Math.PI * 2); this.ctx.fill(); } }
     drawShadow(x, y, radius) { this.ctx.fillStyle = 'rgba(0,0,0,.48)'; this.ctx.beginPath(); this.ctx.ellipse(x, y + 5, radius * .9, radius * .35, 0, 0, Math.PI * 2); this.ctx.fill(); }
     drawExperienceBar(player) { this.ctx.fillStyle = 'rgba(0,0,0,.55)'; this.ctx.fillRect(0, this.height - 6, this.width, 6); this.ctx.fillStyle = '#69d1b0'; this.ctx.fillRect(0, this.height - 6, this.width * Math.min(1, player.xp / player.xpToNext), 6); }

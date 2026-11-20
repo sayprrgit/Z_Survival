@@ -173,6 +173,21 @@ p { color: #b9c4b9; line-height: 1.6; }
 .arena-objective { display: flex; gap: 1rem; align-items: center; min-height: 2rem; padding: .35rem 1rem; background: rgba(17,18,18,.96); color: #aeb1aa; font-size: .68rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .arena-objective > span:first-child { flex: 0 0 auto; color: var(--accent-bright); }
 .arena-objective b { color: var(--paper); }
+.arena-ammo { color: var(--accent-bright) !important; font-weight: 800; letter-spacing: .08em; }
+.arena-loadout { display: flex; min-height: 2.5rem; gap: .45rem; align-items: center; overflow-x: auto; padding: .38rem 1rem; background: rgba(8,10,10,.92); }
+.arena-loadout button { flex: 0 0 auto; border: 1px solid rgba(240,238,233,.24); padding: .42rem .65rem; background: #111516; color: #aeb1aa; cursor: pointer; font: 700 .62rem Inter, sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+.arena-loadout button:hover, .arena-loadout button.is-active { border-color: var(--accent-bright); color: var(--paper); background: rgba(214,59,64,.32); box-shadow: inset 0 -2px var(--accent-bright); }
+.shooter-status { display: flex; z-index: 3; min-width: 250px; align-items: center; gap: .65rem; padding: .45rem 1rem; background: linear-gradient(90deg, rgba(10,13,13,.98), rgba(20,30,28,.86)); border-bottom: 1px solid rgba(105,209,176,.28); }
+.shooter-status .shooter-label { color: #69d1b0; font-size: .53rem; font-weight: 800; letter-spacing: .12em; }
+.shooter-status strong { color: var(--paper); font: 700 1.15rem 'Barlow Condensed', sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+.shooter-ammo { display: flex; margin-left: auto; flex-direction: column; align-items: end; }
+.shooter-ammo b { color: #f5d36d; font: 700 1.25rem 'Barlow Condensed', sans-serif; }
+.shooter-ammo small { color: #aeb1aa; font-size: .52rem; font-weight: 800; letter-spacing: .07em; }
+.arena-augments { display: flex; min-height: 2rem; gap: .35rem; align-items: center; overflow-x: auto; padding: .25rem 1rem; background: rgba(19,29,26,.92); }
+.arena-augments:empty::before { color: #718078; content: 'Aucune augmentation — ouvre un coffre'; font-size: .58rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+.arena-augments span { flex: 0 0 auto; border-left: 2px solid #69d1b0; padding: .2rem .45rem; color: #b9d9c8; font-size: .6rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.arena-loot-key { display: flex; flex-wrap: wrap; gap: .6rem; padding: .35rem 1rem; background: rgba(7,8,8,.92); font-size: .55rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+.loot-ammo { color: #75b8e8; }.loot-weapon { color: #f1b65e; }.loot-upgrade { color: #d58aff; }.loot-chest { color: #e7ddd0; }
 [data-objective] { overflow: hidden; color: #d8d5cd; text-overflow: ellipsis; white-space: nowrap; }
 [data-game-canvas] { display: block; width: 100%; min-height: 430px; flex: 1; cursor: crosshair; }
 .arena-help { margin: 0; padding: .65rem 1rem; color: #a4a69f; font-size: .72rem; }
