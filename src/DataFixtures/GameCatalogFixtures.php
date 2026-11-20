@@ -117,7 +117,7 @@ final class GameCatalogFixtures extends Fixture
                 '+25 % de vitesse et +15 points de chance critique.',
                 80,
                 'pistol',
-                ['unlockCost' => 250, 'unlockDescription' => 'Coût de déblocage indicatif, à équilibrer.', 'movementSpeedBonus' => 0.25, 'criticalChanceBonus' => 0.15],
+                ['unlockCost' => 250, 'unlockDescription' => 'Personnage déblocable avec de la ferraille (coût indicatif MVP).', 'movementSpeedBonus' => 0.25, 'criticalChanceBonus' => 0.15],
             ],
             [
                 CharacterCode::Boris,
@@ -214,16 +214,16 @@ final class GameCatalogFixtures extends Fixture
         }
 
         foreach ([
-            [DifficultyCode::Normal, 'Normal', 1.0, 1],
-            [DifficultyCode::Hard, 'Difficile', 1.3, 2],
-            [DifficultyCode::Nightmare, 'Cauchemar', 1.6, 3],
-        ] as [$code, $name, $multiplier, $sortOrder]) {
+            [DifficultyCode::Normal, 'Normal', 'Le mode de difficulté de départ.', 1.0, 1],
+            [DifficultyCode::Hard, 'Difficile', 'Mode de difficulté du jeu.', 1.3, 2],
+            [DifficultyCode::Nightmare, 'Cauchemar', 'Mode de difficulté du jeu.', 1.6, 3],
+        ] as [$code, $name, $description, $multiplier, $sortOrder]) {
             $this->getOrCreate(
                 $manager,
                 Difficulty::class,
                 'difficulties',
                 $code,
-                fn (): Difficulty => new Difficulty($code, $name, 'Mode de difficulté du jeu.', $multiplier, $sortOrder),
+                fn (): Difficulty => new Difficulty($code, $name, $description, $multiplier, $sortOrder),
             );
         }
 

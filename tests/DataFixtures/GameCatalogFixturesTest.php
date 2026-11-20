@@ -59,6 +59,8 @@ final class GameCatalogFixturesTest extends KernelTestCase
         self::assertSame(2, $this->countRows('enemy_types', 'is_boss = 1'));
         self::assertSame(15, $this->countRows('talents'));
         self::assertSame(3, $this->countRows('difficulties'));
+        self::assertSame('Personnage déblocable avec de la ferraille (coût indicatif MVP).', $this->entityManager->getConnection()->fetchOne("SELECT unlock_description FROM characters WHERE code = 'raven'"));
+        self::assertSame('Le mode de difficulté de départ.', $this->entityManager->getConnection()->fetchOne("SELECT description FROM difficulties WHERE code = 'normal'"));
         self::assertEqualsWithDelta(0.25, (float) $this->entityManager->getConnection()->fetchOne("SELECT healing_effectiveness_bonus FROM characters WHERE code = 'eva'"), 0.0001);
     }
 

@@ -51,7 +51,7 @@ duplication sans mélanger des concepts métier différents :
 
 1. Le schéma MySQL est créé par migrations ; la colonne réservée `range` a été
    renommée en `attack_range`.
-2. Les fixtures chargent quatre personnages, six armes, huit power-ups, quatre
+2. Les fixtures chargent quatre personnages, neuf armes, huit power-ups, quatre
    zombies, deux boss, quinze talents et trois difficultés.
 3. L'inscription hache les mots de passe ; la connexion et la déconnexion
    utilisent Symfony Security et des jetons CSRF. Les pages de jeu et les routes
