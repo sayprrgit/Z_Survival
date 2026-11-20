@@ -9,6 +9,13 @@ const initialiseSurvivorSelectors = () => {
         }
         initialisedRosters.add(roster);
 
+        const loadPortrait = (panel) => {
+            const portrait = panel.querySelector('.survivor-art');
+            if (portrait && panel.dataset.portrait && !portrait.style.backgroundImage) {
+                portrait.style.backgroundImage = `url("${panel.dataset.portrait}")`;
+            }
+        };
+
         const select = (code) => {
             const nextPanel = roster.querySelector(`[data-survivor-panel="${code}"]`);
             if (!nextPanel || nextPanel === currentPanel) {
@@ -21,6 +28,7 @@ const initialiseSurvivorSelectors = () => {
             });
 
             currentPanel = nextPanel;
+            loadPortrait(currentPanel);
             panels.forEach((panel) => {
                 const isActive = panel === currentPanel;
                 panel.classList.remove('is-preparing', 'is-leaving');
@@ -34,6 +42,7 @@ const initialiseSurvivorSelectors = () => {
             panel.classList.toggle('is-active', isActive);
             panel.setAttribute('aria-hidden', String(!isActive));
         });
+        loadPortrait(currentPanel);
         buttons.forEach((button) => {
             const isActive = button.dataset.survivorSelect === currentPanel.dataset.survivorPanel;
             button.classList.toggle('is-active', isActive);

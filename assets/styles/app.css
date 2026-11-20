@@ -1,12 +1,10 @@
-body {
-    background-color: skyblue;
-}
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;1,700&family=Inter:wght@400;500;600;700&display=swap');
 
 :root { --accent: #d63b40; --accent-bright: #ff6262; --paper: #f0eee9; --muted: #a9aba9; --steel: #303438; color: var(--paper); background: #090909; font-family: Inter, sans-serif; }
 html { scroll-behavior: smooth; scroll-snap-type: y proximity; }
 * { box-sizing: border-box; }
-body { min-width: 320px; min-height: 100vh; margin: 0; overflow-x: hidden; background: #090909 url('/images/backgrounds/zombie-city-alert.png') center / cover fixed; }
+body { min-width: 320px; min-height: 100vh; margin: 0; overflow-x: hidden; background: #090909; }
+body.home-page { background: #090909 url('/images/backgrounds/zombie-city-alert.webp') center / cover fixed; }
 body::before, body::after { position: fixed; z-index: 0; content: ''; pointer-events: none; inset: 0; }
 body::before { background: linear-gradient(90deg, rgba(4, 4, 4, .94), rgba(12, 12, 13, .34) 48%, rgba(4, 4, 4, .86)), linear-gradient(0deg, #090909 0%, transparent 50%); }
 body::after { opacity: .16; background-image: repeating-linear-gradient(0deg, transparent 0 3px, rgba(255, 98, 98, .1) 4px 5px); mix-blend-mode: screen; animation: scan 8s linear infinite; }
@@ -51,13 +49,8 @@ p { color: #b9c4b9; line-height: 1.6; }
 .survivor-panel.is-active { z-index: 2; opacity: 1; pointer-events: auto; transform: translateX(0); }
 .survivor-panel.is-preparing { transform: translateX(3.2rem); }
 .survivor-panel.is-leaving { z-index: 1; opacity: 0; transform: translateX(-3.2rem); }
-.survivor-art { position: relative; min-height: 0; overflow: hidden; background-color: #1a1a1c; background-image: url('/images/characters/survivor-roster.png'); background-repeat: no-repeat; background-size: 200% auto; filter: saturate(.75) contrast(1.08); }
+.survivor-art { position: relative; min-height: 0; overflow: hidden; background-color: #1a1a1c; background-repeat: no-repeat; background-size: cover; background-position: center 20%; filter: saturate(.75) contrast(1.08); }
 .survivor-art::after { position: absolute; content: ''; inset: 0; background: linear-gradient(90deg, transparent 35%, #111214 100%), linear-gradient(0deg, rgba(7, 7, 8, .45), transparent 55%); }
-.survivor-art.portrait-mason, .survivor-art.portrait-raven, .survivor-art.portrait-boris, .survivor-art.portrait-eva { background-size: cover; background-position: center 20%; }
-.survivor-art.portrait-mason { background-image: url('/images/characters/mason-soldier.png'); }
-.survivor-art.portrait-raven { background-image: url('/images/characters/raven-scout.png'); }
-.survivor-art.portrait-boris { background-image: url('/images/characters/boris-mechanic.png'); }
-.survivor-art.portrait-eva { background-image: url('/images/characters/eva-medic.png'); }
 .survivor-details { display: flex; z-index: 1; min-height: 0; flex-direction: column; align-items: flex-start; justify-content: flex-end; overflow-y: auto; padding: clamp(1.2rem, 3vw, 3.3rem); background: linear-gradient(90deg, rgba(17, 18, 20, .75), #111214 35%); }
 .survivor-details h3 { margin: .12rem 0 .6rem; color: var(--paper); font-family: 'Barlow Condensed', sans-serif; font-size: clamp(3.6rem, 7vw, 6.8rem); font-weight: 700; letter-spacing: -.04em; line-height: .72; text-transform: uppercase; text-shadow: 0 7px 30px #050505; }
 .survivor-description { max-width: 430px; margin: 0; font-size: .9rem; }
@@ -115,13 +108,13 @@ p { color: #b9c4b9; line-height: 1.6; }
 .character-card::after { position: absolute; z-index: -1; content: ''; inset: 0; background: linear-gradient(180deg, transparent 19%, rgba(8, 8, 9, .15) 38%, #101011 67%); }
 .character-card:hover, .character-card:focus-within { z-index: 2; border-color: var(--accent-bright); box-shadow: 0 20px 48px rgba(0, 0, 0, .56), 0 0 25px rgba(214, 59, 64, .23); transform: translateY(-7px); }
 .character-card.is-selected { border-color: var(--accent-bright); box-shadow: 0 0 0 1px var(--accent), 0 20px 48px rgba(0, 0, 0, .56), 0 0 36px rgba(214, 59, 64, .32); }
-.character-portrait { position: absolute; z-index: -2; inset: 0 0 auto; height: 340px; background-image: url('/images/characters/survivor-roster.png'); background-repeat: no-repeat; background-size: 200% auto; filter: saturate(.72) contrast(1.06); transform: scale(1.03); transition: transform .5s ease, filter .5s ease; }
+.character-portrait { position: absolute; z-index: -2; inset: 0 0 auto; height: 340px; background-image: url('/images/characters/survivor-roster.webp'); background-repeat: no-repeat; background-size: 200% auto; filter: saturate(.72) contrast(1.06); transform: scale(1.03); transition: transform .5s ease, filter .5s ease; }
 .character-card:hover .character-portrait { filter: saturate(1.06) contrast(1.1); transform: scale(1.09); }
 .portrait-mason, .portrait-raven, .portrait-boris, .portrait-eva { background-size: cover; background-position: center 18%; }
-.portrait-mason { background-image: url('/images/characters/mason-soldier.png'); }
-.portrait-raven { background-image: url('/images/characters/raven-scout.png'); }
-.portrait-boris { background-image: url('/images/characters/boris-mechanic.png'); }
-.portrait-eva { background-image: url('/images/characters/eva-medic.png'); }
+.character-portrait.portrait-mason { background-image: url('/images/characters/mason-soldier.webp'); }
+.character-portrait.portrait-raven { background-image: url('/images/characters/raven-scout.webp'); }
+.character-portrait.portrait-boris { background-image: url('/images/characters/boris-mechanic.webp'); }
+.character-portrait.portrait-eva { background-image: url('/images/characters/eva-medic.webp'); }
 .card-scanline { position: absolute; z-index: 1; top: -45%; left: -15%; width: 130%; height: 18%; background: linear-gradient(180deg, transparent, rgba(255, 220, 220, .18), transparent); transform: rotate(-9deg); opacity: 0; transition: opacity .25s; }
 .character-card:hover .card-scanline { opacity: 1; animation: card-scan 1.6s ease-in-out infinite; }
 .character-card-content { position: absolute; z-index: 1; right: 1.2rem; bottom: 1.15rem; left: 1.2rem; }

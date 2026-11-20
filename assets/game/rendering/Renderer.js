@@ -13,9 +13,9 @@ export class Renderer {
         this.width = 0;
         this.height = 0;
         this.assets = new AssetLoader();
-        this.assets.load('background', '/images/backgrounds/zombie-city-alert.png');
-        this.assets.load('survivors', '/images/sprites/survivor-isometric-roster-v1.png');
-        this.assets.load('zombies', '/images/sprites/zombie-isometric-roster-v1.png');
+        this.assets.load('background', '/images/backgrounds/zombie-city-alert.webp');
+        this.assets.load('survivors', '/images/sprites/survivor-isometric-roster-v1.webp');
+        this.assets.load('zombies', '/images/sprites/zombie-isometric-roster-v1.webp');
     }
 
     resize() {

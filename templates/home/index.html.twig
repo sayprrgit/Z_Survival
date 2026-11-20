@@ -2,8 +2,11 @@
 
 {% block title %}Z_Survival — Accueil{% endblock %}
 
+{% block body_class %}home-page{% endblock %}
+
 {% block body %}
     {% set activeCode = selectedCharacterCode ?: (characters|first).code.value %}
+    {% set portraits = {mason: 'mason-soldier.webp', raven: 'raven-scout.webp', boris: 'boris-mechanic.webp', eva: 'eva-medic.webp'} %}
 
     <section class="landing-section" aria-labelledby="landing-title">
         <div class="landing-copy">
@@ -27,7 +30,7 @@
         <div class="survivor-showcase">
             <div class="survivor-stage" aria-live="polite">
                 {% for character in characters %}
-                    <article class="survivor-panel {{ character.code.value == activeCode ? 'is-active' : '' }}" data-survivor-panel="{{ character.code.value }}" aria-hidden="{{ character.code.value == activeCode ? 'false' : 'true' }}">
+                    <article class="survivor-panel {{ character.code.value == activeCode ? 'is-active' : '' }}" data-survivor-panel="{{ character.code.value }}" data-portrait="{{ asset('images/characters/' ~ portraits[character.code.value]) }}" aria-hidden="{{ character.code.value == activeCode ? 'false' : 'true' }}">
                         <div class="survivor-art portrait-{{ character.code.value }}" aria-hidden="true"></div>
                         <div class="survivor-details">
                             <p class="character-role">Dossier {{ character.code.value|upper }} // {{ character.id }}</p>
