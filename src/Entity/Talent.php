@@ -60,4 +60,39 @@ final class Talent extends AbstractCatalogItem
     {
         $this->parent = $parent;
     }
+
+    public function getCode(): string
+    {
+        return $this->code;
+    }
+
+    public function getBranch(): TalentBranch
+    {
+        return $this->branch;
+    }
+
+    public function getTier(): int
+    {
+        return $this->tier;
+    }
+
+    public function getCost(): int
+    {
+        return $this->cost;
+    }
+
+    public function getEffectType(): string
+    {
+        return $this->effectType;
+    }
+
+    public function getEffectValue(): float
+    {
+        return $this->effectValue;
+    }
+
+    public function getParent(): ?self
+    {
+        return $this->parent;
+    }
 }

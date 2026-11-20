@@ -1,0 +1,55 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Z_Survival — Personnages{% endblock %}
+
+{% block body %}
+    <section class="selection-shell">
+        <header class="selection-header">
+            <div>
+                <p class="eyebrow"><span class="status-dot"></span> Canal tactique // secteur 09</p>
+                <h1>Choisis ton<br><em>survivant.</em></h1>
+            </div>
+            <p class="selection-warning">La zone est compromise.<br>Une seule personne entre.</p>
+        </header>
+
+        <div class="selection-layout">
+            <section class="character-grid" aria-label="Personnages jouables">
+                {% for character in characters %}
+                    <article class="character-card {{ character.code.value == selectedCharacterCode ? 'is-selected' : '' }}">
+                        <div class="card-scanline" aria-hidden="true"></div>
+                        <div class="character-portrait portrait-{{ character.code.value }}" aria-hidden="true"></div>
+                        <div class="character-card-content">
+                            <p class="character-role">{{ character.role }}</p>
+                            <h2>{{ character.name }}</h2>
+                            <p class="character-description">{{ character.description }}</p>
+                            <dl class="character-stats">
+                                <div><dt>Intégrité</dt><dd>{{ character.stats.maxHealth }} <small>PV</small></dd></div>
+                                <div><dt>Arme</dt><dd>{{ character.startingWeaponLabel }}</dd></div>
+                            </dl>
+                            <p class="passive"><span>Capacité passive</span>{{ character.passiveDescription }}</p>
+                            <form action="{{ path('character_select', {code: character.code.value}) }}" method="post">
+                                <input type="hidden" name="_token" value="{{ csrf_token('select-character') }}">
+                                <button class="button" type="submit">
+                                    <span>{{ character.code.value == selectedCharacterCode ? 'Déployer' : 'Choisir' }}</span>
+                                    <b>→</b>
+                                </button>
+                            </form>
+                        </div>
+                    </article>
+                {% endfor %}
+            </section>
+
+            <aside class="mission-panel">
+                <p class="panel-label">État de la mission</p>
+                <div class="threat-meter"><span></span></div>
+                <p class="threat-level">MENACE <strong>ÉLEVÉE</strong></p>
+                <dl>
+                    <div><dt>Mode</dt><dd>Normal</dd></div>
+                    <div><dt>Extraction</dt><dd>15:00</dd></div>
+                    <div><dt>Signal</dt><dd class="signal-live">EN LIGNE</dd></div>
+                </dl>
+                <p class="mission-tip">Astuce : chaque survivant possède un profil de combat différent. Adapte ton déplacement à son arme initiale.</p>
+            </aside>
+        </div>
+    </section>
+{% endblock %}

@@ -59,4 +59,89 @@ final class Run extends AbstractEntity
         $this->difficulty = $difficulty;
         $this->startedAt = new \DateTimeImmutable();
     }
+
+    public function getUser(): User
+    {
+        return $this->user;
+    }
+
+    public function getCharacter(): Character
+    {
+        return $this->character;
+    }
+
+    public function getDifficulty(): Difficulty
+    {
+        return $this->difficulty;
+    }
+
+    public function getStartedAt(): \DateTimeImmutable
+    {
+        return $this->startedAt;
+    }
+
+    public function getFinishedAt(): ?\DateTimeImmutable
+    {
+        return $this->finishedAt;
+    }
+
+    public function getSurvivalSeconds(): int
+    {
+        return $this->survivalSeconds;
+    }
+
+    public function getReachedLevel(): int
+    {
+        return $this->reachedLevel;
+    }
+
+    public function getKills(): int
+    {
+        return $this->kills;
+    }
+
+    public function getScrapEarned(): int
+    {
+        return $this->scrapEarned;
+    }
+
+    public function getResult(): ?RunResult
+    {
+        return $this->result;
+    }
+
+    public function getStatus(): RunStatus
+    {
+        return $this->status;
+    }
+
+    public function getRewardsGrantedAt(): ?\DateTimeImmutable
+    {
+        return $this->rewardsGrantedAt;
+    }
+
+    public function finish(int $survivalSeconds, int $reachedLevel, int $kills, RunResult $result, int $scrapEarned, \DateTimeImmutable $finishedAt): void
+    {
+        if ($this->status !== RunStatus::Active) {
+            throw new \LogicException('Cette partie est déjà terminée.');
+        }
+
+        $this->survivalSeconds = $survivalSeconds;
+        $this->reachedLevel = $reachedLevel;
+        $this->kills = $kills;
+        $this->result = $result;
+        $this->scrapEarned = $scrapEarned;
+        $this->finishedAt = $finishedAt;
+        $this->status = RunStatus::Finished;
+    }
+
+    public function markRewardsGranted(\DateTimeImmutable $grantedAt): void
+    {
+        if ($this->status !== RunStatus::Finished) {
+            throw new \LogicException('Les récompenses ne peuvent être versées que pour une partie terminée.');
+        }
+
+        $this->rewardsGrantedAt = $grantedAt;
+        $this->status = RunStatus::RewardsGranted;
+    }
 }

@@ -9,6 +9,9 @@ Le lire pour toute évolution du jeu, après les présentes règles.
 
 - Le jeu est un roguelite solo navigateur. Le serveur prépare et valide une
   partie ; le moteur Canvas JavaScript exécute la simulation temps réel.
+- L'authentification et la progression persistante sont différées. Tant qu'elles
+  ne sont pas explicitement demandées, la sélection du personnage est stockée
+  dans la session Symfony, sans lecture ni écriture en base de données.
 - Garder le MVP jouable en priorité. Ne pas ajouter de multijoueur, de moteur 3D,
   de crafting, de monde ouvert ou de framework JavaScript.
 - Ne pas dupliquer les règles de jeu : les définitions et calculs persistants

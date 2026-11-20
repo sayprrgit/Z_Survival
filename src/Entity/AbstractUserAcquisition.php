@@ -23,4 +23,14 @@ abstract class AbstractUserAcquisition extends AbstractEntity
         $this->user = $user;
         $this->acquiredAt = new \DateTimeImmutable();
     }
+
+    public function getUser(): User
+    {
+        return $this->user;
+    }
+
+    public function getAcquiredAt(): \DateTimeImmutable
+    {
+        return $this->acquiredAt;
+    }
 }

@@ -6,5 +6,15 @@ import './stimulus_bootstrap.js';
  * which should already be in your base.html.twig.
  */
 import './styles/app.css';
+import './survivor-selector.js';
 
-console.log('This log comes from assets/app.js - welcome to AssetMapper! 🎉');
+let gameModule;
+
+const loadGameWhenNeeded = () => {
+    if (document.querySelector('[data-game-root]') && !gameModule) {
+        gameModule = import('./game/game-entry.js');
+    }
+};
+
+document.addEventListener('turbo:load', loadGameWhenNeeded);
+loadGameWhenNeeded();
