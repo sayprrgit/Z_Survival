@@ -105,16 +105,6 @@ final class Character extends AbstractCombatantCatalogItem
         return $this->code;
     }
 
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    public function getBaseHealth(): int
-    {
-        return $this->baseHealth;
-    }
-
     public function getPassiveDescription(): string
     {
         return $this->passiveDescription;
@@ -169,4 +159,9 @@ final class Character extends AbstractCombatantCatalogItem
     {
         return $this->healingEffectivenessBonus;
     }
+
+    public function getPortraitPath(): ?string
+    {
+        return $this->portraitPath;
+}
 }

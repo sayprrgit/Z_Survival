@@ -1,153 +1,224 @@
 import { GameLoop } from './GameLoop.js';
 import { GameState } from './GameState.js';
 import { InputManager } from './InputManager.js';
-import { Enemy } from '../entities/Enemy.js';
-import { CombatSystem } from '../systems/CombatSystem.js';
-import { UpgradeSystem } from '../systems/UpgradeSystem.js';
 import { GameApi } from '../api/GameApi.js';
+import { CombatSystem } from '../systems/CombatSystem.js';
+import { CollisionSystem } from '../systems/CollisionSystem.js';
+import { DifficultySystem } from '../systems/DifficultySystem.js';
+import { EnemyAiSystem } from '../systems/EnemyAiSystem.js';
+import { LootSystem } from '../systems/LootSystem.js';
+import { MovementSystem } from '../systems/MovementSystem.js';
+import { SpawnSystem } from '../systems/SpawnSystem.js';
+import { UpgradeSystem } from '../systems/UpgradeSystem.js';
+import { Camera } from '../rendering/Camera.js';
+import { Renderer } from '../rendering/Renderer.js';
+import { ThreeRenderer } from '../rendering/ThreeRenderer.js';
 
 export class Game {
     constructor(root, configuration) {
         this.root = root;
-        this.canvas = root.querySelector('[data-game-canvas]');
-        this.ctx = this.canvas.getContext('2d');
         this.state = new GameState(configuration);
         this.api = new GameApi(root);
         this.runId = null;
         this.input = new InputManager();
+        this.difficulty = new DifficultySystem(configuration.difficulties, configuration.difficulty);
+        this.movement = new MovementSystem();
+        this.enemyAi = new EnemyAiSystem();
         this.combat = new CombatSystem();
-        this.upgrades = new UpgradeSystem(this.state);
-        this.loop = new GameLoop((dt) => this.update(dt), () => this.render());
-        this.resize = () => this.resizeCanvas();
+        this.collision = new CollisionSystem();
+        this.loot = new LootSystem();
+        this.spawner = new SpawnSystem(this.state, this.difficulty);
+        this.upgrades = new UpgradeSystem(this.state, root);
+        this.renderer = this.createRenderer(root.querySelector('[data-game-canvas]'));
+        this.loop = new GameLoop((dt) => this.update(dt), () => this.renderer.render(this.state));
+        this.pauseButton = root.querySelector('[data-game-pause]');
+        this.fullscreenButton = root.querySelector('[data-game-fullscreen]');
+        this.resize = () => this.renderer.resize();
+        this.visibilityChange = () => document.hidden ? this.state.pause('visibility') : this.state.resume('visibility');
+        this.fullscreenChange = () => { this.renderer.resize(); this.updateFullscreenButton(); };
+        this.pauseButton?.addEventListener('click', () => this.togglePause());
+        this.fullscreenButton?.addEventListener('click', () => this.toggleFullscreen());
         window.addEventListener('resize', this.resize);
-        this.resizeCanvas();
-        this.render();
+        document.addEventListener('visibilitychange', this.visibilityChange);
+        document.addEventListener('fullscreenchange', this.fullscreenChange);
+        this.renderer.resize();
+        this.updateHud();
         this.initializeRun();
+    }
+
+    createRenderer(canvas) {
+        try {
+            const renderer = new ThreeRenderer(canvas);
+            canvas.dataset.renderer = 'webgl';
+            return renderer;
+        } catch (error) {
+            console.warn('WebGL indisponible, activation du rendu isométrique.', error);
+            const fallback = canvas.cloneNode(false);
+            canvas.replaceWith(fallback);
+            fallback.dataset.renderer = 'canvas';
+
+            return new Renderer(fallback, new Camera());
+        }
     }
 
     async initializeRun() {
         const status = this.root.querySelector('[data-run-status]');
+
         try {
-            const run = await this.api.startRun({ character: this.state.configuration.player.code, difficulty: 'normal' });
+            const run = await this.api.startRun({
+                character: this.state.configuration.player.code,
+                difficulty: this.state.configuration.difficulty,
+            });
             this.runId = run.id;
-            status.hidden = true;
+            if (status) status.hidden = true;
             this.loop.start();
         } catch (error) {
-            status.textContent = `Impossible de démarrer la partie : ${error.message}`;
-            status.classList.add('is-error');
+            if (status) {
+                status.textContent = `Impossible de démarrer la partie : ${error.message}`;
+                status.classList.add('is-error');
+            }
         }
-    }
-
-    resizeCanvas() {
-        const box = this.canvas.getBoundingClientRect();
-        const ratio = Math.min(window.devicePixelRatio || 1, 2);
-        this.canvas.width = Math.floor(box.width * ratio);
-        this.canvas.height = Math.floor(box.height * ratio);
-        this.ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-        this.width = box.width; this.height = box.height;
     }
 
     update(dt) {
-        const s = this.state, p = s.player;
-        if (s.paused || s.over) return;
-        s.elapsed += dt;
-        const movement = this.input.vector();
-        p.x += movement.x * p.moveSpeed * dt;
-        p.y += movement.y * p.moveSpeed * dt;
-        p.health = Math.min(p.maxHealth, p.health + p.regeneration * dt);
-        s.spawnTimer -= dt;
-        if (s.spawnTimer <= 0) {
-            const angle = Math.random() * Math.PI * 2;
-            const radius = Math.max(this.width, this.height) * 0.65;
-            s.enemies.push(new Enemy(p.x + Math.cos(angle) * radius, p.y + Math.sin(angle) * radius, p.level));
-            s.spawnTimer = Math.max(0.26, 1.2 - s.elapsed / 180);
+        const state = this.state;
+        if (this.input.consume('pause') && !state.over && !this.upgrades.active) this.togglePause();
+        if (this.input.consume('fullscreen')) this.toggleFullscreen();
+        if (state.over || state.paused) {
+            this.updateHud();
+
+            return;
         }
-        for (const enemy of s.enemies) {
-            const dx = p.x - enemy.x, dy = p.y - enemy.y, distance = Math.hypot(dx, dy) || 1;
-            if (distance > p.radius + enemy.radius) { enemy.x += dx / distance * enemy.speed * dt; enemy.y += dy / distance * enemy.speed * dt; }
-            enemy.hitCooldown -= dt;
-            if (distance < p.radius + enemy.radius + 2 && enemy.hitCooldown <= 0) {
-                p.takeDamage(enemy.damage * (1 - Math.min(0.8, p.base.damageReduction)));
-                enemy.hitCooldown = 0.8;
-            }
+
+        state.elapsed += dt;
+        this.movement.update(state.player, this.input.vector(), dt);
+        state.player.health = Math.min(state.player.maxHealth, state.player.health + state.player.regeneration * dt);
+        this.spawner.update(dt, this.renderer.width, this.renderer.height);
+        this.enemyAi.update(state, dt);
+        this.combat.update(state, dt);
+        this.collision.update(state, dt);
+        this.handleDefeatedEnemies(this.loot.rewardDefeatedEnemies(state));
+        if (state.over) {
+            this.updateHud();
+
+            return;
         }
-        this.combat.update(s, dt);
-        for (const projectile of s.projectiles) {
-            projectile.x += projectile.vx * dt; projectile.y += projectile.vy * dt;
-            for (const enemy of s.enemies) {
-                if (enemy.dead || projectile.hit.has(enemy)) continue;
-                if ((enemy.x - projectile.x) ** 2 + (enemy.y - projectile.y) ** 2 < (enemy.radius + projectile.radius) ** 2) {
-                    enemy.takeDamage(projectile.damage); projectile.hit.add(enemy);
-                    if (projectile.pierce-- <= 0) projectile.dead = true;
-                    break;
-                }
-            }
-        }
-        s.projectiles = s.projectiles.filter((shot) => !shot.dead && Math.abs(shot.x-p.x) < 900 && Math.abs(shot.y-p.y) < 900);
-        for (const enemy of s.enemies) if (enemy.dead && !enemy.rewarded) {
-            enemy.rewarded = true; s.kills++;
-            s.orbs.push({ x: enemy.x, y: enemy.y, xp: 1 + Math.floor(s.elapsed / 90), radius: 5 });
-        }
-        s.enemies = s.enemies.filter((enemy) => !enemy.dead);
-        for (const orb of s.orbs) {
-            const dx = p.x-orb.x, dy = p.y-orb.y, distance = Math.hypot(dx, dy) || 1;
-            if (distance < p.pickupRadius) { orb.x += dx / distance * Math.min(380, (p.pickupRadius-distance+60)*5) * dt; orb.y += dy / distance * Math.min(380, (p.pickupRadius-distance+60)*5) * dt; }
-            if (distance < p.radius + orb.radius + 4) { p.xp += orb.xp * (1 + p.bonuses.xp); orb.collected = true; }
-        }
-        s.orbs = s.orbs.filter((orb) => !orb.collected);
-        while (p.xp >= p.xpToNext) {
-            p.xp -= p.xpToNext; p.level++; p.xpToNext = Math.floor(5 + p.level * 2.3);
-            this.upgrades.open(); break;
-        }
-        if (p.dead) this.end();
+
+        this.loot.updateOrbs(state, dt);
+        if (state.player.dead) this.end('defeat');
+        else this.resolveLevels();
         this.updateHud();
     }
 
-    render() {
-        const ctx = this.ctx, s = this.state, p = s.player;
-        ctx.clearRect(0, 0, this.width, this.height);
-        ctx.fillStyle = '#171918'; ctx.fillRect(0, 0, this.width, this.height);
-        const left = p.x - this.width/2, top = p.y - this.height/2;
-        ctx.strokeStyle = 'rgba(199,203,181,.08)'; ctx.lineWidth = 1;
-        const grid = 48, sx = -((left % grid) + grid) % grid, sy = -((top % grid) + grid) % grid;
-        for (let x=sx; x<this.width; x+=grid) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,this.height); ctx.stroke(); }
-        for (let y=sy; y<this.height; y+=grid) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(this.width,y); ctx.stroke(); }
-        const xy = (entity) => ({ x: entity.x-left, y: entity.y-top });
-        for (const zone of s.fireZones) { const at=xy(zone); ctx.fillStyle='rgba(240,91,42,.2)'; ctx.beginPath(); ctx.arc(at.x,at.y,zone.radius,0,Math.PI*2); ctx.fill(); }
-        for (const orb of s.orbs) { const at=xy(orb); ctx.fillStyle='#7cddbd'; ctx.shadowColor='#7cddbd'; ctx.shadowBlur=12; ctx.beginPath(); ctx.arc(at.x,at.y,orb.radius,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0; }
-        for (const shot of s.projectiles) { const at=xy(shot); ctx.fillStyle=shot.color; ctx.beginPath(); ctx.arc(at.x,at.y,shot.radius,0,Math.PI*2); ctx.fill(); }
-        for (const enemy of s.enemies) { const at=xy(enemy); ctx.fillStyle=enemy.color; ctx.beginPath(); ctx.arc(at.x,at.y,enemy.radius,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#302d29'; ctx.fillRect(at.x-enemy.radius,at.y-enemy.radius-7,enemy.radius*2,3); ctx.fillStyle='#ba594d'; ctx.fillRect(at.x-enemy.radius,at.y-enemy.radius-7,enemy.radius*2*Math.max(0,enemy.health/enemy.maxHealth),3); }
-        ctx.fillStyle='#e9c681'; ctx.beginPath(); ctx.arc(this.width/2,this.height/2,p.radius,0,Math.PI*2); ctx.fill();
-        ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(0,this.height-5,this.width,5);
-        ctx.fillStyle='#76c8a4'; ctx.fillRect(0,this.height-5,this.width*Math.min(1,p.xp/p.xpToNext),5);
+    handleDefeatedEnemies(defeated) {
+        for (const enemy of defeated) {
+            if (enemy.code === this.state.finalBossCode) this.end('victory');
+            else if (enemy.isBoss) this.state.objective = `Boss neutralisé. Tiens jusqu'à ${this.formatTime(this.state.finalBossAvailableAt)}.`;
+        }
+    }
+
+    resolveLevels() {
+        const player = this.state.player;
+        while (player.xp >= player.xpToNext) {
+            player.xp -= player.xpToNext;
+            player.level++;
+            player.xpToNext = Math.floor(5 + player.level * 2.3);
+            this.state.pendingUpgrades++;
+        }
+        if (this.state.pendingUpgrades > 0 && !this.upgrades.active) {
+            this.state.pendingUpgrades--;
+            this.upgrades.open();
+        }
+    }
+
+    togglePause() {
+        if (this.state.pauseReasons.has('manual')) this.state.resume('manual');
+        else this.state.pause('manual');
+        this.updateHud();
+    }
+
+    async toggleFullscreen() {
+        try {
+            if (document.fullscreenElement === this.root) await document.exitFullscreen();
+            else await this.root.requestFullscreen();
+        } catch {
+            this.setText('[data-objective]', 'Le plein écran n’est pas disponible dans ce navigateur.');
+        }
     }
 
     updateHud() {
-        const p=this.state.player, s=this.state;
-        this.root.querySelector('[data-level]').textContent=p.level;
-        this.root.querySelector('[data-kills]').textContent=s.kills;
-        this.root.querySelector('[data-health]').textContent=Math.ceil(p.health);
-        this.root.querySelector('[data-health-bar]').style.width=`${100*p.health/p.maxHealth}%`;
-        const seconds=Math.floor(s.elapsed);
-        this.root.querySelector('[data-time]').textContent=`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`;
+        const { player, elapsed, kills, wave, objective, paused, over } = this.state;
+        this.setText('[data-level]', player.level);
+        this.setText('[data-kills]', kills);
+        this.setText('[data-health]', Math.ceil(player.health));
+        this.setText('[data-wave]', wave);
+        this.setText('[data-objective]', objective);
+        this.setText('[data-time]', this.formatTime(elapsed));
+        const healthBar = this.root.querySelector('[data-health-bar]');
+        if (healthBar) healthBar.style.width = `${100 * player.health / player.maxHealth}%`;
+        if (this.pauseButton) {
+            this.pauseButton.textContent = paused && !over ? 'Reprendre' : 'Pause';
+            this.pauseButton.setAttribute('aria-pressed', String(paused && !over));
+        }
+        this.updateFullscreenButton();
     }
 
-    end() {
-        this.state.over=true;
-        const panel=this.root.querySelector('[data-game-over]'); panel.hidden=false;
-        this.root.querySelector('[data-end-title]').textContent='Fin de partie';
-        this.root.querySelector('[data-end-stats]').textContent=`Survie : ${Math.floor(this.state.elapsed)} s · Éliminations : ${this.state.kills} · Niveau ${this.state.player.level}`;
-        if (this.runId !== null) {
-            this.api.finishRun(this.runId, {
-                survivalSeconds: Math.floor(this.state.elapsed),
-                reachedLevel: this.state.player.level,
-                kills: this.state.kills,
-                result: 'defeat',
-            }).then((summary) => {
-                this.root.querySelector('[data-end-stats]').textContent += ` · +${summary.scrapEarned} ferraille (solde ${summary.scrapBalance})`;
-            }).catch((error) => {
-                this.root.querySelector('[data-end-stats]').textContent += ` · Récompense non enregistrée : ${error.message}`;
-            });
-        }
+    end(result) {
+        if (this.state.over) return;
+        this.state.over = true;
+        this.state.result = result;
+        this.state.pause('end');
+        const panel = this.root.querySelector('[data-game-over]');
+        if (panel) panel.hidden = false;
+        this.setText('[data-end-kicker]', result === 'victory' ? 'MISSION RÉUSSIE' : 'SURVIVANT PERDU');
+        this.setText('[data-end-title]', result === 'victory' ? 'Zone sécurisée' : 'Fin de partie');
+        const label = result === 'victory' ? 'Boss final neutralisé' : 'Survie';
+        this.setText('[data-end-stats]', `${label} : ${this.formatTime(this.state.elapsed)} · Éliminations : ${this.state.kills} · Niveau ${this.state.player.level}`);
+        this.updateHud();
+
+        if (this.runId === null) return;
+
+        const resultPayload = {
+            survivalSeconds: Math.floor(this.state.elapsed),
+            reachedLevel: this.state.player.level,
+            kills: this.state.kills,
+            result,
+        };
+        if (result === 'victory') resultPayload.bossCode = this.state.finalBossCode;
+
+        this.api.finishRun(this.runId, resultPayload).then((summary) => {
+            const stats = this.root.querySelector('[data-end-stats]');
+            if (stats) stats.textContent += ` · +${summary.scrapEarned} ferraille (solde ${summary.scrapBalance})`;
+        }).catch((error) => {
+            const stats = this.root.querySelector('[data-end-stats]');
+            if (stats) stats.textContent += ` · Récompense non enregistrée : ${error.message}`;
+        });
+    }
+
+    setText(selector, value) {
+        const node = this.root.querySelector(selector);
+        if (node) node.textContent = value;
+    }
+
+    updateFullscreenButton() {
+        if (!this.fullscreenButton) return;
+        const active = document.fullscreenElement === this.root;
+        this.fullscreenButton.textContent = active ? 'Quitter le plein écran' : 'Plein écran';
+        this.fullscreenButton.setAttribute('aria-pressed', String(active));
+    }
+
+    formatTime(seconds) {
+        const total = Math.floor(seconds);
+
+        return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+    }
+
+    destroy() {
+        this.loop.stop();
+        this.input.destroy();
+        window.removeEventListener('resize', this.resize);
+        document.removeEventListener('visibilitychange', this.visibilityChange);
+        document.removeEventListener('fullscreenchange', this.fullscreenChange);
+        this.renderer.destroy?.();
     }
 }

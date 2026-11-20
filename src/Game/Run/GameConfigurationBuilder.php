@@ -26,53 +26,77 @@ final readonly class GameConfigurationBuilder
     ) {
     }
 
-    public function build(PlayableCharacter $character, User $user): GameConfiguration
+    public function build(PlayableCharacter $character, User $user, string $difficulty = 'normal'): GameConfiguration
     {
         $weapons = array_map(static fn ($weapon): array => [
-            'code' => $weapon->getCode()->value, 'name' => $weapon->getName(), 'description' => $weapon->getDescription(),
-            'attackType' => $weapon->getAttackType(), 'damage' => $weapon->getBaseDamage(), 'interval' => $weapon->getAttackInterval(),
-            'range' => $weapon->getRange(), 'projectileCount' => $weapon->getProjectileCount(), 'pierce' => $weapon->getPierceCount(),
-            'area' => $weapon->getAreaOfEffect(), 'maxLevel' => $weapon->getMaxLevel(),
+            'code' => $weapon->getCode()->value,
+            'name' => $weapon->getName(),
+            'description' => $weapon->getDescription(),
+            'attackType' => $weapon->getAttackType(),
+            'damage' => $weapon->getBaseDamage(),
+            'interval' => $weapon->getAttackInterval(),
+            'range' => $weapon->getRange(),
+            'projectileCount' => $weapon->getProjectileCount(),
+            'pierce' => $weapon->getPierceCount(),
+            'area' => $weapon->getAreaOfEffect(),
+            'maxLevel' => $weapon->getMaxLevel(),
         ], $this->weapons->findBy([], ['code' => 'ASC']));
         $powerUps = array_map(static fn ($powerUp): array => [
-            'code' => $powerUp->getCode()->value, 'name' => $powerUp->getName(), 'description' => $powerUp->getDescription(),
-            'effect' => $powerUp->getEffectType(), 'bonus' => $powerUp->getBonusPerLevel(), 'maxLevel' => $powerUp->getMaxLevel(),
+            'code' => $powerUp->getCode()->value,
+            'name' => $powerUp->getName(),
+            'description' => $powerUp->getDescription(),
+            'effect' => $powerUp->getEffectType(),
+            'bonus' => $powerUp->getBonusPerLevel(),
+            'maxLevel' => $powerUp->getMaxLevel(),
         ], $this->powerUps->findBy([], ['code' => 'ASC']));
         $enemies = array_map(static fn ($enemy): array => [
             'code' => $enemy->getCode()->value,
             'name' => $enemy->getName(),
             'description' => $enemy->getDescription(),
+            'boss' => $enemy->isBoss(),
+            'isBoss' => $enemy->isBoss(),
+            'health' => $enemy->getBaseHealth(),
             'maxHealth' => $enemy->getBaseHealth(),
             'damage' => $enemy->getBaseDamage(),
             'speed' => $enemy->getMovementSpeed(),
             'range' => $enemy->getAttackRange(),
             'interval' => $enemy->getAttackInterval(),
-            'isBoss' => $enemy->isBoss(),
+            'weight' => $enemy->getSpawnWeight(),
             'spawnWeight' => $enemy->getSpawnWeight(),
+            'availableAt' => $enemy->getAvailableFromSeconds(),
             'availableFromSeconds' => $enemy->getAvailableFromSeconds(),
+            'experience' => $enemy->getExperienceReward(),
             'experienceReward' => $enemy->getExperienceReward(),
-            'scrapDropChance' => $enemy->getScrapDropChance(),
-            'minimumScrapDrop' => $enemy->getMinimumScrapDrop(),
-            'maximumScrapDrop' => $enemy->getMaximumScrapDrop(),
+            'scrapChance' => $enemy->getScrapDropChance(),
+            'minimumScrap' => $enemy->getMinimumScrapDrop(),
+            'maximumScrap' => $enemy->getMaximumScrapDrop(),
             'spritePath' => $enemy->getSpritePath(),
-        ], $this->enemies->findBy([], ['code' => 'ASC']));
-        $difficulties = array_map(static fn ($difficulty): array => [
-            'code' => $difficulty->getCode()->value,
-            'name' => $difficulty->getName(),
-            'description' => $difficulty->getDescription(),
-            'multiplier' => $difficulty->getMultiplier(),
-            'sortOrder' => $difficulty->getSortOrder(),
-        ], $this->difficulties->findBy([], ['sortOrder' => 'ASC']));
+        ], $this->enemies->findAllForGame());
+        $difficulties = array_map(static fn ($item): array => [
+            'code' => $item->getCode()->value,
+            'name' => $item->getName(),
+            'description' => $item->getDescription(),
+            'multiplier' => $item->getMultiplier(),
+            'sortOrder' => $item->getSortOrder(),
+        ], $this->difficulties->findAllForGame());
         $stats = $this->statsCalculator->calculate($character, $this->talentEffects->effectsFor($user));
 
         return new GameConfiguration([
-            'code' => $character->code->value, 'name' => $character->name, 'weapon' => $character->startingWeapon->value,
-            'maxHealth' => $stats->maxHealth, 'damageBonus' => $stats->damageBonus,
-            'attackSpeedBonus' => $stats->attackSpeedBonus, 'movementSpeedBonus' => $stats->movementSpeedBonus,
-            'criticalChanceBonus' => $stats->criticalChanceBonus, 'damageReduction' => $stats->damageReduction,
-            'healthRegeneration' => $stats->healthRegeneration, 'healingBonus' => $stats->healingBonus,
-            'pickupRangeBonus' => $stats->pickupRangeBonus, 'experienceBonus' => $stats->experienceBonus,
-            'lootChanceBonus' => $stats->lootChanceBonus, 'scrapBonus' => $stats->scrapBonus,
-        ], $weapons, $powerUps, $enemies, $difficulties);
+            'code' => $character->code->value,
+            'name' => $character->name,
+            'weapon' => $character->startingWeapon->value,
+            'maxHealth' => $stats->maxHealth,
+            'damageBonus' => $stats->damageBonus,
+            'attackSpeedBonus' => $stats->attackSpeedBonus,
+            'movementSpeedBonus' => $stats->movementSpeedBonus,
+            'criticalChanceBonus' => $stats->criticalChanceBonus,
+            'damageReduction' => $stats->damageReduction,
+            'healthRegeneration' => $stats->healthRegeneration,
+            'healingBonus' => $stats->healingBonus,
+            'pickupRangeBonus' => $stats->pickupRangeBonus,
+            'experienceBonus' => $stats->experienceBonus,
+            'lootChanceBonus' => $stats->lootChanceBonus,
+            'scrapBonus' => $stats->scrapBonus,
+        ], $weapons, $powerUps, $enemies, $difficulties, $difficulty);
     }
 }

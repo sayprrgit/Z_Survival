@@ -14,4 +14,21 @@ final class EnemyTypeRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, EnemyType::class);
     }
+
+    /** @return list<EnemyType> */
+    public function findAllForShowcase(): array
+    {
+        return $this->createQueryBuilder('enemy')
+            ->orderBy('enemy.isBoss', 'ASC')
+            ->addOrderBy('enemy.availableFromSeconds', 'ASC')
+            ->addOrderBy('enemy.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /** @return list<EnemyType> */
+    public function findAllForGame(): array
+    {
+        return $this->findAllForShowcase();
+    }
 }

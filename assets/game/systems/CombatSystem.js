@@ -7,7 +7,11 @@ export class CombatSystem {
             const weapon = state.definitions.weaponsByCode.get(code);
             item.cooldown -= dt;
             if (item.cooldown > 0 || !state.enemies.length) continue;
-            const targets = state.enemies.filter((enemy) => !enemy.dead).map((enemy) => ({ enemy, distance: Math.hypot(enemy.x - player.x, enemy.y - player.y) })).filter(({ distance }) => distance <= weapon.range).sort((a, b) => a.distance - b.distance);
+            const targets = state.enemies.filter((enemy) => !enemy.dead).map((enemy) => {
+                const dx = enemy.x - player.x;
+                const dy = enemy.y - player.y;
+                return { enemy, distanceSquared: dx * dx + dy * dy };
+            }).filter(({ distanceSquared }) => distanceSquared <= weapon.range * weapon.range).sort((a, b) => a.distanceSquared - b.distanceSquared);
             if (!targets.length) continue;
             const target = targets[0].enemy;
             const angle = Math.atan2(target.y - player.y, target.x - player.x);
@@ -16,10 +20,14 @@ export class CombatSystem {
             item.cooldown = interval;
             if (weapon.attackType === 'melee_area') {
                 const radius = weapon.area * (1 + (item.level - 1) * 0.14);
-                for (const enemy of state.enemies) if (Math.hypot(enemy.x - player.x, enemy.y - player.y) <= radius) enemy.takeDamage(damage);
+                for (const enemy of state.enemies) {
+                    const dx = enemy.x - player.x;
+                    const dy = enemy.y - player.y;
+                    if (dx * dx + dy * dy <= radius * radius) enemy.takeDamage(damage);
+                }
             } else if (weapon.attackType === 'melee') {
-                for (const { enemy, distance } of targets.slice(0, 2)) {
-                    if (distance < weapon.range + 22 && Math.abs(Math.atan2(Math.sin(Math.atan2(enemy.y-player.y, enemy.x-player.x)-angle), Math.cos(Math.atan2(enemy.y-player.y, enemy.x-player.x)-angle))) < 0.85) {
+                for (const { enemy, distanceSquared } of targets.slice(0, 2)) {
+                    if (distanceSquared < (weapon.range + 22) ** 2 && Math.abs(Math.atan2(Math.sin(Math.atan2(enemy.y-player.y, enemy.x-player.x)-angle), Math.cos(Math.atan2(enemy.y-player.y, enemy.x-player.x)-angle))) < 0.85) {
                         enemy.takeDamage(damage);
                         if (item.level >= weapon.maxLevel) enemy.bleed = 2;
                     }
@@ -40,13 +48,5 @@ export class CombatSystem {
         for (const enemy of state.enemies) {
             if (enemy.bleed > 0) { enemy.bleed -= dt; enemy.takeDamage(dt * 4); }
         }
-        for (const zone of state.fireZones) {
-            zone.duration -= dt; zone.tick -= dt;
-            if (zone.tick <= 0) {
-                zone.tick = 0.45;
-                for (const enemy of state.enemies) if (Math.hypot(enemy.x-zone.x, enemy.y-zone.y) < zone.radius) enemy.takeDamage(zone.damage);
-            }
-        }
-        state.fireZones = state.fireZones.filter((zone) => zone.duration > 0);
     }
 }

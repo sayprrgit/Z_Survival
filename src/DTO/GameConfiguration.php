@@ -7,7 +7,7 @@ namespace App\DTO;
 final readonly class GameConfiguration implements \JsonSerializable
 {
     /**
-     * @param array<string, int|float|string> $player
+     * @param array<string, int|float|string|bool|null> $player
      * @param list<array<string, int|float|string|bool|null>> $weapons
      * @param list<array<string, int|float|string|bool|null>> $powerUps
      * @param list<array<string, int|float|string|bool|null>> $enemies
@@ -19,6 +19,7 @@ final readonly class GameConfiguration implements \JsonSerializable
         public array $powerUps,
         public array $enemies,
         public array $difficulties,
+        public string $difficulty = 'normal',
     ) {
     }
 
@@ -30,6 +31,7 @@ final readonly class GameConfiguration implements \JsonSerializable
             'powerUps' => $this->powerUps,
             'enemies' => $this->enemies,
             'difficulties' => $this->difficulties,
+            'difficulty' => $this->difficulty,
         ];
     }
 }

@@ -10,6 +10,8 @@ export class Player extends Actor {
         this.level = 1;
         this.xpToNext = 5;
         this.pickupRadius = 90;
+        this.facing = { x: 1, y: 0 };
+        this.isMoving = false;
         this.addWeapon(this.base.weapon);
         this.recalculate();
     }

@@ -10,6 +10,7 @@ use App\DTO\StartedRun;
 use App\Entity\Character;
 use App\Entity\User;
 use App\Enum\CharacterCode;
+use App\Enum\DifficultyCode;
 use App\Game\Run\DifficultyService;
 use App\Game\Run\RunService;
 use App\Game\Reward\UnlockService;
@@ -41,6 +42,11 @@ final class RunController extends AbstractController
         $selectedCode = CharacterCode::tryFrom((string) $request->getSession()->get('selected_character'));
         if ($selectedCode === null || $selectedCode !== $payload->character) {
             throw $this->createAccessDeniedException('Le personnage doit être sélectionné avant le départ.');
+        }
+
+        $selectedDifficulty = DifficultyCode::tryFrom((string) $request->getSession()->get('selected_difficulty', DifficultyCode::Normal->value));
+        if ($selectedDifficulty === null || $selectedDifficulty !== $payload->difficulty) {
+            throw $this->createAccessDeniedException('La difficulté doit être sélectionnée avant le départ.');
         }
 
         $character = $characters->findOneBy(['code' => $selectedCode]);

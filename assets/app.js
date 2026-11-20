@@ -7,4 +7,14 @@ import './stimulus_bootstrap.js';
  */
 import './styles/app.css';
 import './survivor-selector.js';
-import './game/game-entry.js';
+
+let gameModule;
+
+const loadGameWhenNeeded = () => {
+    if (document.querySelector('[data-game-root]') && !gameModule) {
+        gameModule = import('./game/game-entry.js');
+    }
+};
+
+document.addEventListener('turbo:load', loadGameWhenNeeded);
+loadGameWhenNeeded();

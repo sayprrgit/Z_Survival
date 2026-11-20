@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Entity\Character;
 use App\Entity\User;
 use App\Enum\CharacterCode;
-use App\Game\Character\CharacterFactory;
+use App\Enum\DifficultyCode;
 use App\Game\Reward\UnlockService;
 use App\Repository\CharacterRepository;
+use App\Repository\DifficultyRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -32,18 +31,16 @@ final class CharacterController extends AbstractController
     public function select(
         string $code,
         Request $request,
-        CharacterFactory $characterFactory,
         CharacterRepository $characters,
+        DifficultyRepository $difficulties,
         UnlockService $unlockService,
     ): RedirectResponse {
         if (!$this->isCsrfTokenValid('select-character', (string) $request->request->get('_token'))) {
             throw $this->createAccessDeniedException('Jeton de sélection invalide.');
         }
 
-        $characterCode = CharacterCode::tryFrom($code);
-        $character = $characterCode === null ? null : $characterFactory->find($characterCode);
-        $catalogCharacter = $characterCode === null ? null : $characters->findOneBy(['code' => $characterCode]);
-        if ($character === null || !$catalogCharacter instanceof Character) {
+        $character = $characters->findOneByCodeValue($code);
+        if ($character === null) {
             throw $this->createNotFoundException('Personnage introuvable.');
         }
 
@@ -51,14 +48,21 @@ final class CharacterController extends AbstractController
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
+
         try {
-            $unlockService->assertUnlocked($user, $catalogCharacter);
+            $unlockService->assertUnlocked($user, $character);
         } catch (\DomainException $exception) {
             throw $this->createAccessDeniedException($exception->getMessage(), $exception);
         }
 
-        $request->getSession()->set('selected_character', $character->code->value);
-        $this->addFlash('success', sprintf('%s est prêt à survivre.', $character->name));
+        $difficultyCode = DifficultyCode::tryFrom((string) $request->request->get('difficulty', DifficultyCode::Normal->value));
+        if ($difficultyCode === null || $difficulties->findOneBy(['code' => $difficultyCode]) === null) {
+            throw $this->createNotFoundException('Difficulté introuvable.');
+        }
+
+        $request->getSession()->set('selected_character', $character->getCode()->value);
+        $request->getSession()->set('selected_difficulty', $difficultyCode->value);
+        $this->addFlash('success', sprintf('%s est prêt à survivre.', $character->getName()));
 
         return $this->redirectToRoute('game_index');
     }
