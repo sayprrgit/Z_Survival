@@ -1,4 +1,5 @@
 import { Player } from '../entities/Player.js';
+import { ProceduralWorld } from '../world/ProceduralWorld.js';
 
 export class GameState {
     constructor(configuration) {
@@ -13,6 +14,8 @@ export class GameState {
             .sort((first, second) => first.availableAt - second.availableAt);
         this.player = new Player(configuration);
         this.player.attachDefinitions(this.definitions);
+        this.world = new ProceduralWorld();
+        this.world.update(this.player);
         this.enemies = [];
         this.nextEntityId = 1;
         this.projectiles = [];
@@ -21,8 +24,11 @@ export class GameState {
         this.orbs = [];
         this.fireZones = [];
         this.messages = [];
+        this.soundEvents = [];
         this.elapsed = 0;
         this.kills = 0;
+        this.resources = 0;
+        this.talents = new Set();
         this.spawnTimer = 0;
         this.wave = 1;
         this.lastLootWave = 0;

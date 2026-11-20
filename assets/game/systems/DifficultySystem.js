@@ -18,6 +18,6 @@ export class DifficultySystem {
     }
 
     spawnIntervalAt(elapsed) {
-        return Math.max(0.35, 1.25 / (1 + elapsed / 300) / this.multiplier);
+        return Math.max(0.28, .72 / (1 + elapsed / 420) / this.multiplier);
     }
 }

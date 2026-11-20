@@ -1,0 +1,3 @@
+{% extends 'base.html.twig' %}
+{% block title %}Z_Survival — Talents{% endblock %}
+{% block body %}<section class="upgrade-dialog"><p class="eyebrow">PROGRESSION DE SESSION</p><h1>Arbre des talents</h1><p>Ferraille disponible : <strong>{{ progression.resources }}</strong></p><p>{{ progression.talents|length }} nœud(s) acquis. L’arbre interactif est disponible dans l’interface de mission et après chaque mort.</p><p><a class="button" href="{{ path('game_index') }}">Ouvrir l’arbre interactif</a> <a class="button button-secondary" href="{{ path('character_index') }}">Choisir un survivant</a></p></section>{% endblock %}

@@ -6,6 +6,8 @@ export class Player extends Actor {
         this.base = configuration.player;
         this.weapons = new Map();
         this.powerUps = new Map();
+        this.maxPowerUps = 3;
+        this.unlockedWeapons = new Set(['pistol', 'assault_rifle', 'shotgun', 'mace', 'knife', 'molotov']);
         this.facing = { x: 1, y: 0 };
         this.isMoving = false;
         this.activeWeaponCode = null;
@@ -18,14 +20,16 @@ export class Player extends Actor {
         if (this.weapons.has(code)) this.weapons.get(code).level++;
         else {
             const melee = code === 'mace' || code === 'knife';
-            const magazine = melee ? Infinity : ({ pistol: 12, assault_rifle: 30, shotgun: 8, molotov: 3 }[code] ?? 12);
-            this.weapons.set(code, { level: 1, cooldown: 0, ammo: magazine, reserve: melee ? Infinity : magazine * 3, magazine, reload: 0 });
+            const minigun = code === 'minigun';
+            const magazine = melee || minigun ? Infinity : ({ pistol: 12, assault_rifle: 30, shotgun: 8, molotov: 3, sniper: 5, rocket_launcher: 1 }[code] ?? 12);
+            this.weapons.set(code, { level: 1, cooldown: 0, ammo: minigun ? 300 : magazine, reserve: melee ? Infinity : minigun ? 0 : magazine * 3, magazine, reload: 0 });
             this.activeWeaponCode ??= code;
         }
         this.recalculate();
     }
 
     get activeWeapon() { return this.weapons.get(this.activeWeaponCode); }
+    unlockWeapon(code) { this.unlockedWeapons.add(code); this.addWeapon(code); }
 
     switchWeapon(direction = 1) {
         const codes = [...this.weapons.keys()];
@@ -40,11 +44,13 @@ export class Player extends Actor {
 
     reloadWeapon() {
         const weapon = this.activeWeapon;
-        if (!weapon || weapon.reload > 0 || weapon.ammo >= weapon.magazine || weapon.reserve <= 0 || !Number.isFinite(weapon.magazine)) return;
-        weapon.reload = weapon.magazine <= 8 ? 1.35 : 1.8;
+        if (!weapon || weapon.reload > 0 || weapon.ammo >= weapon.magazine || weapon.reserve <= 0 || !Number.isFinite(weapon.magazine)) return false;
+        weapon.reload = this.activeWeaponCode === 'rocket_launcher' ? 4.8 : weapon.magazine <= 8 ? 1.35 : 1.8;
+        return true;
     }
 
     updateWeapons(dt) {
+        this.attackFlash = Math.max(0, (this.attackFlash ?? 0) - dt);
         for (const weapon of this.weapons.values()) {
             weapon.cooldown = Math.max(0, weapon.cooldown - dt);
             if (weapon.reload <= 0) continue;
@@ -58,7 +64,10 @@ export class Player extends Actor {
     }
 
     addAmmo(amount) {
-        for (const weapon of this.weapons.values()) if (Number.isFinite(weapon.reserve)) weapon.reserve = Math.min(weapon.reserve + amount, weapon.magazine * 8);
+        for (const [code, weapon] of this.weapons) {
+            if (code === 'minigun') weapon.ammo = Math.min(900, weapon.ammo + amount);
+            else if (Number.isFinite(weapon.reserve)) weapon.reserve = Math.min(weapon.reserve + amount, weapon.magazine * 8);
+        }
     }
 
     addPowerUp(definition) {

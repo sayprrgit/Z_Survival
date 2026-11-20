@@ -12,4 +12,7 @@ enum WeaponCode: string
     case Mace = 'mace';
     case Knife = 'knife';
     case Molotov = 'molotov';
+    case Sniper = 'sniper';
+    case RocketLauncher = 'rocket_launcher';
+    case Minigun = 'minigun';
 }

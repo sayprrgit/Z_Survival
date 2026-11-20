@@ -53,7 +53,7 @@ final class GameCatalogFixturesTest extends KernelTestCase
         (new ORMExecutor($this->entityManager))->execute([$fixture, $fixture], append: true);
 
         self::assertSame(4, $this->countRows('characters'));
-        self::assertSame(6, $this->countRows('weapons'));
+        self::assertSame(9, $this->countRows('weapons'));
         self::assertSame(8, $this->countRows('power_ups'));
         self::assertSame(6, $this->countRows('enemy_types'));
         self::assertSame(2, $this->countRows('enemy_types', 'is_boss = 1'));

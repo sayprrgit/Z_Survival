@@ -24,7 +24,10 @@ export class SpawnSystem {
             .filter((enemy) => !enemy.boss && enemy.availableAt <= state.elapsed && enemy.weight > 0);
         if (!available.length) return;
 
-        const count = Math.min(5, 1 + Math.floor((state.wave - 1) / 2));
+        const alive = state.enemies.filter((enemy) => !enemy.dead && !enemy.isBoss).length;
+        const maximumAlive = Math.min(80, 24 + state.wave * 5);
+        const groupSize = Math.min(10, 3 + Math.floor((state.wave - 1) / 2));
+        const count = Math.max(0, Math.min(groupSize, maximumAlive - alive));
         for (let index = 0; index < count; index++) this.spawn(this.pickWeighted(available), width, height);
         state.spawnTimer = this.difficulty.spawnIntervalAt(state.elapsed);
     }
@@ -41,15 +44,17 @@ export class SpawnSystem {
     }
 
     spawn(definition, width, height, boss = false) {
-        const angle = Math.random() * Math.PI * 2;
         const radius = Math.max(width, height) * (boss ? 0.82 : 0.65);
         const EnemyClass = boss ? Boss : Enemy;
-        const enemy = new EnemyClass(
-            this.state.player.x + Math.cos(angle) * radius,
-            this.state.player.y + Math.sin(angle) * radius,
-            definition,
-            this.difficulty.enemyScaleAt(this.state.elapsed),
-        );
+        let x = this.state.player.x;
+        let y = this.state.player.y;
+        for (let attempt = 0; attempt < 8; attempt++) {
+            const angle = Math.random() * Math.PI * 2;
+            x = this.state.player.x + Math.cos(angle) * radius;
+            y = this.state.player.y + Math.sin(angle) * radius;
+            if (!this.state.world.isBlocked(x, y, boss ? 28 : 20)) break;
+        }
+        const enemy = new EnemyClass(x, y, definition, this.difficulty.enemyScaleAt(this.state.elapsed));
         enemy.runtimeId = this.state.nextEntityId++;
         this.state.enemies.push(enemy);
     }

@@ -89,6 +89,15 @@ final class GameCatalogFixtures extends Fixture
                 range: 320,
                 areaOfEffect: 150,
             )),
+            WeaponCode::Sniper->value => $this->getOrCreate($manager, Weapon::class, 'weapons', WeaponCode::Sniper, fn (): Weapon => new Weapon(
+                WeaponCode::Sniper, 'Sniper', 'Très puissant et perforant, mais lent.', 'targeted', 120, 2.4, 'Perfore davantage.', range: 720, projectileCount: 1, pierceCount: 4,
+            )),
+            WeaponCode::RocketLauncher->value => $this->getOrCreate($manager, Weapon::class, 'weapons', WeaponCode::RocketLauncher, fn (): Weapon => new Weapon(
+                WeaponCode::RocketLauncher, 'Lance-roquettes', 'Explosion dévastatrice, un seul tir et rechargement long.', 'area_damage', 210, 5.5, 'Zone explosive renforcée.', range: 500, areaOfEffect: 220,
+            )),
+            WeaponCode::Minigun->value => $this->getOrCreate($manager, Weapon::class, 'weapons', WeaponCode::Minigun, fn (): Weapon => new Weapon(
+                WeaponCode::Minigun, 'Minigun', 'Cadence extrême et énorme chargeur, très gourmande en munitions.', 'rapid', 14, .075, 'Tirs perforants.', range: 480, projectileCount: 1, pierceCount: 1,
+            )),
         ];
 
         $characters = [

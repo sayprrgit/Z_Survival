@@ -22,15 +22,19 @@ export class CollisionSystem {
         let writeIndex = 0;
         for (const projectile of state.projectiles) {
             if (projectile.dead) continue;
-            projectile.x += projectile.vx * dt;
-            projectile.y += projectile.vy * dt;
+            if (!projectile.instant) { projectile.x += projectile.vx * dt; projectile.y += projectile.vy * dt; }
             projectile.lifetime -= dt;
             if (projectile.lifetime <= 0) { projectile.dead = true; continue; }
+            if (projectile.impact && this.shouldExplode(projectile, state.enemies, dt)) { state.fireZones.push({ x: projectile.x, y: projectile.y, radius: projectile.explosive.radius, damage: projectile.explosive.damage, duration: 3.5, tick: 0 }); state.soundEvents.push({ type: 'explosion' }); projectile.dead = true; continue; }
+            if (projectile.instant) { state.projectiles[writeIndex++] = projectile; continue; }
+            if (projectile.visualOnly) { state.projectiles[writeIndex++] = projectile; continue; }
             this.hitProjectile(projectile);
             if (!projectile.dead) state.projectiles[writeIndex++] = projectile;
         }
         state.projectiles.length = writeIndex;
     }
+
+    shouldExplode(projectile, enemies, dt) { if ((projectile.x - projectile.impact.x) ** 2 + (projectile.y - projectile.impact.y) ** 2 <= (projectile.vx * dt) ** 2 + (projectile.vy * dt) ** 2) return true; return enemies.some((enemy) => !enemy.dead && (enemy.x - projectile.x) ** 2 + (enemy.y - projectile.y) ** 2 <= (enemy.radius + projectile.radius) ** 2); }
 
     updateFireZones(state, dt) {
         for (const zone of state.fireZones) {
@@ -57,7 +61,7 @@ export class CollisionSystem {
             if (!cell) continue;
             for (const enemy of cell) {
                 if (enemy.dead || projectile.hit.has(enemy)) continue;
-                const radius = enemy.radius + projectile.radius;
+                const radius = enemy.radius + projectile.radius + 10;
                 const dx = enemy.x - projectile.x;
                 const dy = enemy.y - projectile.y;
                 if (dx * dx + dy * dy > radius * radius) continue;

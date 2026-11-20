@@ -3,6 +3,7 @@ export class EnemyAiSystem {
         const player = state.player;
         for (const enemy of state.enemies) {
             if (enemy.dead) continue;
+            enemy.isMoving = false;
             const dx = player.x - enemy.x;
             const dy = player.y - enemy.y;
             const distanceSquared = dx * dx + dy * dy;
@@ -11,6 +12,8 @@ export class EnemyAiSystem {
                 const distance = Math.sqrt(distanceSquared) || 1;
                 enemy.x += dx / distance * enemy.speed * dt;
                 enemy.y += dy / distance * enemy.speed * dt;
+                state.world.resolveCircle(enemy);
+                enemy.isMoving = true;
             }
             enemy.hitCooldown -= dt;
             enemy.attackFlash = Math.max(0, (enemy.attackFlash ?? 0) - dt);

@@ -12,7 +12,7 @@ export class UpgradeSystem {
         for (const definition of definitions.powerUpsByCode.values()) {
             if (['pickup_range_bonus', 'experience_bonus'].includes(definition.effect)) continue;
             const owned = player.powerUps.get(definition.code);
-            if (owned ? owned.level < definition.maxLevel : player.powerUps.size < 3) choices.push({ type: 'powerUp', definition, level: (owned?.level ?? 0) + 1 });
+            if (owned ? owned.level < definition.maxLevel : player.powerUps.size < player.maxPowerUps) choices.push({ type: 'powerUp', definition, level: (owned?.level ?? 0) + 1 });
         }
         return choices.sort(() => Math.random() - 0.5).slice(0, 3);
     }

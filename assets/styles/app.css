@@ -158,6 +158,11 @@ p { color: #b9c4b9; line-height: 1.6; }
 @media (max-width: 620px) { .site-header, .page-content { width: min(100% - 1.5rem, 1320px); } .site-header { min-height: 65px; } .brand { font-size: 1.45rem; } .selection-header { display: block; } .selection-warning { margin-top: 1rem; text-align: left; } .character-grid { grid-template-columns: 1fr; } .character-card { min-height: 525px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
 
+/* Tactical in-game HUD */
+.arena-hud { min-height:4.4rem; padding:.55rem 13.5rem .55rem 1rem; background:linear-gradient(100deg,#080c0e 0%,#14201e 48%,#080b0c 100%); border-bottom:1px solid rgba(105,209,176,.3); box-shadow:inset 0 -12px 28px rgba(0,0,0,.32); }
+.hud-identity { display:flex; min-width:145px; flex-direction:column; }.hud-identity small,.hud-stat small { color:#69d1b0; font-size:.48rem; font-weight:800; letter-spacing:.15em; }.hud-stat { display:grid; grid-template-columns:auto auto; column-gap:.3rem; align-items:baseline; padding-left:.85rem; border-left:1px solid rgba(230,230,228,.16); }.hud-stat small { grid-column:1/-1; }.hud-stat b { color:#f5f2e9; font:800 1.15rem 'Barlow Condensed',sans-serif; letter-spacing:.07em; }.hud-stat em { color:#8f9892; font-size:.52rem; font-style:normal; }.hud-scrap b { color:#61d8d2; }
+.shooter-status { gap:.85rem; padding:.55rem 1rem; background:linear-gradient(90deg,rgba(5,9,10,.98),rgba(18,39,35,.94) 65%,rgba(5,9,10,.98)); border-bottom-color:rgba(105,209,176,.5); box-shadow:inset 4px 0 #69d1b0; }.shooter-ammo { min-width:110px; padding-left:.8rem; border-left:1px solid rgba(105,209,176,.22); }.arena-loadout { min-height:3rem; background:linear-gradient(90deg,rgba(7,10,11,.98),rgba(16,23,22,.96)); border-bottom:1px solid rgba(230,230,228,.12); }.arena-loadout button { min-width:125px; padding:.52rem .7rem; }
+
 .arena { position: relative; display: flex; min-height: min(78vh, 820px); flex-direction: column; overflow: hidden; border: 1px solid rgba(230,230,228,.25); background: #171918; }
 .arena:fullscreen { width: 100vw; min-height: 100vh; border: 0; }
 .arena-hud { display: flex; min-height: 3.5rem; align-items: center; justify-content: space-between; gap: .8rem; padding: .7rem 13.5rem .7rem 1rem; color: var(--paper); font-size: .76rem; }
@@ -196,6 +201,12 @@ p { color: #b9c4b9; line-height: 1.6; }
 .upgrade-dialog { width: min(820px, 100%); padding: clamp(1.2rem,4vw,2.5rem); border: 1px solid rgba(230,230,228,.3); background: #191c1a; box-shadow: 0 20px 70px #000; }
 .upgrade-dialog h2 { margin: .3rem 0 1.2rem; color: var(--paper); font-size: clamp(1.8rem,5vw,3rem); }
 [data-upgrade-options] { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .7rem; }
+.talent-tree { display: grid; grid-template-columns: repeat(3, minmax(220px,1fr)); gap: 1rem; overflow-x: auto; padding: .5rem; }
+.talent-branch { position: relative; display: flex; min-width: 220px; flex-direction: column; align-items: center; gap: .65rem; padding: .65rem; border: 1px solid rgba(105,209,176,.2); background: linear-gradient(180deg,rgba(30,49,43,.55),rgba(16,19,18,.8)); }
+.talent-branch h3 { margin: 0; color: #69d1b0; font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; }
+.talent-node { position: relative; width: 100%; min-height: 82px; border: 1px solid rgba(230,230,228,.28); padding: .55rem; background: #171d1b; color: var(--paper); text-align: left; cursor: pointer; }
+.talent-node:not(:last-child)::after { position: absolute; z-index: 0; bottom: -.7rem; left: 50%; width: 2px; height: .7rem; background: #69d1b0; content: ''; }
+.talent-node:disabled { opacity: .42; cursor: not-allowed; }.talent-node.is-owned { border-color: #69d1b0; background: #17352c; opacity: 1; }.talent-node small,.talent-node span { display: block; color: #aeb1aa; font-size: .58rem; }.talent-node strong { display: block; margin: .15rem 0; font-size: .78rem; text-transform: uppercase; }
 .upgrade-card { display: flex; min-height: 150px; flex-direction: column; gap: .7rem; padding: 1rem; border: 1px solid rgba(230,230,228,.24); background: #222623; color: var(--paper); text-align: left; cursor: pointer; }
 .upgrade-card:hover, .upgrade-card:focus-visible { border-color: var(--accent-bright); background: #2b302c; outline: none; }
 .upgrade-card small { color: var(--accent-bright); font-size: .63rem; font-weight: 800; letter-spacing: .1em; }
