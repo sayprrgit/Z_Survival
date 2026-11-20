@@ -27,12 +27,26 @@ export class Game {
         this.combat = new CombatSystem();
         this.collision = new CollisionSystem();
         this.loot = new LootSystem();
+        this.state.lootSystem = this.loot;
         this.spawner = new SpawnSystem(this.state, this.difficulty);
         this.upgrades = new UpgradeSystem(this.state, root);
         this.renderer = this.createRenderer(root.querySelector('[data-game-canvas]'));
         this.loop = new GameLoop((dt) => this.update(dt), () => this.renderer.render(this.state));
         this.pauseButton = root.querySelector('[data-game-pause]');
         this.fullscreenButton = root.querySelector('[data-game-fullscreen]');
+        this.hud = {
+            kills: root.querySelector('[data-kills]'), health: root.querySelector('[data-health]'),
+            wave: root.querySelector('[data-wave]'), objective: root.querySelector('[data-objective]'), time: root.querySelector('[data-time]'),
+            healthBar: root.querySelector('[data-health-bar]'), weapons: root.querySelector('[data-weapons]'), augments: root.querySelector('[data-augments]'), ammo: root.querySelector('[data-ammo]'), activeWeapon: root.querySelector('[data-active-weapon]'), reload: root.querySelector('[data-reload-status]'),
+        };
+        this.selectWeaponFromHud = (event) => {
+            const control = event.target.closest('[data-weapon-code]');
+            if (!control || !this.hud.weapons?.contains(control)) return;
+            this.state.player.selectWeapon(control.dataset.weaponCode);
+            this.updateHud();
+        };
+        this.hud.weapons?.addEventListener('click', this.selectWeaponFromHud);
+        this.nextHudUpdate = 0;
         this.resize = () => this.renderer.resize();
         this.visibilityChange = () => document.hidden ? this.state.pause('visibility') : this.state.resume('visibility');
         this.fullscreenChange = () => { this.renderer.resize(); this.updateFullscreenButton(); };
@@ -89,9 +103,23 @@ export class Game {
 
             return;
         }
+        if (this.input.consume('switchWeapon')) state.player.switchWeapon();
+        const weaponSlot = this.input.consumeWeaponSlot();
+        if (weaponSlot !== null) state.player.selectWeapon([...state.player.weapons.keys()][weaponSlot]);
+        if (this.input.consume('reload')) state.player.reloadWeapon();
+        if (this.input.consume('interact')) {
+            const loot = this.loot.interact(state);
+            if (loot === 'upgrade') this.upgrades.open();
+        }
+        if (state.over || state.paused) {
+            this.updateHud();
+
+            return;
+        }
 
         state.elapsed += dt;
         this.movement.update(state.player, this.input.vector(), dt);
+        state.player.updateWeapons(dt);
         state.player.health = Math.min(state.player.maxHealth, state.player.health + state.player.regeneration * dt);
         this.spawner.update(dt, this.renderer.width, this.renderer.height);
         this.enemyAi.update(state, dt);
@@ -103,31 +131,22 @@ export class Game {
 
             return;
         }
-
-        this.loot.updateOrbs(state, dt);
+        this.loot.update(state);
+        if (state.pendingUpgradeDrops > 0 && !this.upgrades.active) {
+            state.pendingUpgradeDrops--;
+            this.upgrades.open();
+        }
         if (state.player.dead) this.end('defeat');
-        else this.resolveLevels();
-        this.updateHud();
+        if (state.elapsed >= this.nextHudUpdate) {
+            this.nextHudUpdate = state.elapsed + .1;
+            this.updateHud();
+        }
     }
 
     handleDefeatedEnemies(defeated) {
         for (const enemy of defeated) {
             if (enemy.code === this.state.finalBossCode) this.end('victory');
             else if (enemy.isBoss) this.state.objective = `Boss neutralisé. Tiens jusqu'à ${this.formatTime(this.state.finalBossAvailableAt)}.`;
-        }
-    }
-
-    resolveLevels() {
-        const player = this.state.player;
-        while (player.xp >= player.xpToNext) {
-            player.xp -= player.xpToNext;
-            player.level++;
-            player.xpToNext = Math.floor(5 + player.level * 2.3);
-            this.state.pendingUpgrades++;
-        }
-        if (this.state.pendingUpgrades > 0 && !this.upgrades.active) {
-            this.state.pendingUpgrades--;
-            this.upgrades.open();
         }
     }
 
@@ -149,17 +168,31 @@ export class Game {
     updateHud() {
         const { player, elapsed, kills, wave, objective, paused, over } = this.state;
         this.setText('[data-level]', player.level);
-        this.setText('[data-kills]', kills);
-        this.setText('[data-health]', Math.ceil(player.health));
-        this.setText('[data-wave]', wave);
-        this.setText('[data-objective]', objective);
-        this.setText('[data-time]', this.formatTime(elapsed));
-        const healthBar = this.root.querySelector('[data-health-bar]');
-        if (healthBar) healthBar.style.width = `${100 * player.health / player.maxHealth}%`;
-        if (this.pauseButton) {
-            this.pauseButton.textContent = paused && !over ? 'Reprendre' : 'Pause';
-            this.pauseButton.setAttribute('aria-pressed', String(paused && !over));
-        }
+        this.setNodeText(this.hud.kills, kills);
+        this.setNodeText(this.hud.health, Math.ceil(player.health));
+        this.setNodeText(this.hud.wave, wave);
+        this.setNodeText(this.hud.objective, objective);
+        this.setNodeText(this.hud.time, this.formatTime(elapsed));
+        if (this.hud.healthBar) this.hud.healthBar.style.width = `${100 * player.health / player.maxHealth}%`;
+        const activeWeapon = player.activeWeapon;
+        const activeDefinition = this.state.definitions.weaponsByCode.get(player.activeWeaponCode);
+        if (this.hud.activeWeapon) this.setNodeText(this.hud.activeWeapon, activeDefinition?.name ?? 'Arme');
+        if (this.hud.ammo) this.setNodeText(this.hud.ammo, Number.isFinite(activeWeapon?.ammo) ? `${activeWeapon.ammo} / ${activeWeapon.magazine}` : '∞');
+        if (this.hud.reload) this.setNodeText(this.hud.reload, activeWeapon?.reload > 0 ? `RECHARGEMENT ${Math.ceil(activeWeapon.reload * 10) / 10}s` : Number.isFinite(activeWeapon?.reserve) ? `RÉSERVE ${activeWeapon.reserve}` : 'CORPS À CORPS');
+        if (this.hud.weapons) this.hud.weapons.replaceChildren(...[...player.weapons].map(([code, item]) => {
+            const slot = document.createElement('button');
+            slot.type = 'button';
+            slot.className = code === player.activeWeaponCode ? 'is-active' : '';
+            slot.dataset.weaponCode = code;
+            slot.textContent = `${[...player.weapons.keys()].indexOf(code) + 1} · ${this.state.definitions.weaponsByCode.get(code)?.name ?? code}`;
+            return slot;
+        }));
+        if (this.hud.augments) this.hud.augments.replaceChildren(...[...player.powerUps].map(([code, item]) => {
+            const augment = document.createElement('span');
+            augment.textContent = `${this.state.definitions.powerUpsByCode.get(code)?.name ?? code} N${item.level}`;
+            return augment;
+        }));
+        if (this.pauseButton) { this.pauseButton.textContent = paused && !over ? 'Reprendre' : 'Pause'; this.pauseButton.setAttribute('aria-pressed', String(paused && !over)); }
         this.updateFullscreenButton();
     }
 
@@ -200,6 +233,10 @@ export class Game {
         if (node) node.textContent = value;
     }
 
+    setNodeText(node, value) {
+        if (node && node.textContent !== String(value)) node.textContent = String(value);
+    }
+
     updateFullscreenButton() {
         if (!this.fullscreenButton) return;
         const active = document.fullscreenElement === this.root;
@@ -212,13 +249,13 @@ export class Game {
 
         return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
     }
-
     destroy() {
         this.loop.stop();
         this.input.destroy();
         window.removeEventListener('resize', this.resize);
         document.removeEventListener('visibilitychange', this.visibilityChange);
         document.removeEventListener('fullscreenchange', this.fullscreenChange);
+        this.hud.weapons?.removeEventListener('click', this.selectWeaponFromHud);
         this.renderer.destroy?.();
     }
 }

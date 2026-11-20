@@ -2,8 +2,9 @@ export class InputManager {
     constructor(target = window) {
         this.keys = new Set();
         this.actions = new Set();
+        this.weaponSlot = null;
         this.target = target;
-        this.down = (event) => { const key = event.key.toLowerCase(); if (['arrowup','arrowdown','arrowleft','arrowright',' ','escape'].includes(key)) event.preventDefault(); if (key === 'escape' || key === 'p') this.actions.add('pause'); if (key === 'f') this.actions.add('fullscreen'); this.keys.add(key); };
+        this.down = (event) => { const key = event.key.toLowerCase(); if (['arrowup','arrowdown','arrowleft','arrowright',' ','escape'].includes(key)) event.preventDefault(); if (key === 'escape' || key === 'p') this.actions.add('pause'); if (key === 'f') this.actions.add('fullscreen'); if (key === 'x') this.actions.add('switchWeapon'); if (key === 'r') this.actions.add('reload'); if (key === 'e') this.actions.add('interact'); if (/^[1-6]$/.test(key)) this.weaponSlot = Number(key) - 1; this.keys.add(key); };
         this.up = (event) => this.keys.delete(event.key.toLowerCase());
         target.addEventListener('keydown', this.down);
         target.addEventListener('keyup', this.up);
@@ -15,5 +16,6 @@ export class InputManager {
         return { x: x / length, y: y / length };
     }
     consume(action) { const present = this.actions.has(action); this.actions.delete(action); return present; }
+    consumeWeaponSlot() { const slot = this.weaponSlot; this.weaponSlot = null; return slot; }
     destroy() { this.target.removeEventListener('keydown', this.down); this.target.removeEventListener('keyup', this.up); }
 }

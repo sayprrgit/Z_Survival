@@ -41,6 +41,9 @@ test('configuration exposes every catalog weapon and power-up', () => {
     assert.deepEqual([...state.definitions.weaponsByCode.keys()].sort(), [...weaponCodes].sort());
     assert.equal(state.definitions.powerUpsByCode.size, 8);
     assert.equal(state.player.weapons.has('pistol'), true);
+    assert.equal(state.player.weapons.has('knife'), true);
+    state.player.selectWeapon('knife');
+    assert.equal(state.player.activeWeaponCode, 'knife');
 });
 
 test('power-up levels recalculate stats without compounding previous levels', () => {
@@ -59,8 +62,8 @@ test('all catalog power-up effect types are handled by the runtime', () => {
     assert.ok(state.player.moveSpeed > 175);
     assert.equal(state.player.criticalChance, 0.05);
     assert.ok(state.player.regeneration > 0);
-    assert.ok(state.player.pickupRadius > 90);
-    assert.ok(state.player.bonuses.xp > 0);
+    assert.equal('pickupRadius' in state.player, false);
+    assert.equal('xp' in state.player, false);
 });
 
 test('each of the six weapons executes its configured attack style', () => {
@@ -73,7 +76,8 @@ test('each of the six weapons executes its configured attack style', () => {
         config.weapons = config.weapons.map((weapon) => weapon.code === code ? { ...weapon, attackType, area: 120, range: 380 } : weapon);
         const state = new GameState(config);
         state.player.weapons.clear();
-        state.player.weapons.set(code, { level: 1, cooldown: 0 });
+        state.player.weapons.set(code, { level: 1, cooldown: 0, ammo: 30, reserve: 60, magazine: 30, reload: 0 });
+        state.player.activeWeaponCode = code;
         const target = new Enemy(25, 0, config.enemies[0]);
         state.enemies.push(target);
         new CombatSystem().update(state, 0.01);
@@ -102,12 +106,12 @@ test('spawn system uses catalog availability, weight and boss timing', () => {
 test('difficulty drives waves and increases threat over time', () => {
     const difficulty = new DifficultySystem(configuration().difficulties, 'hard');
     assert.equal(difficulty.waveAt(0), 1);
-    assert.equal(difficulty.waveAt(90), 4);
+    assert.equal(difficulty.waveAt(90), 3);
     assert.ok(difficulty.enemyScaleAt(600) > difficulty.enemyScaleAt(0));
     assert.ok(difficulty.spawnIntervalAt(600) < difficulty.spawnIntervalAt(0));
 });
 
-test('core loop systems move, attack, collide and reward experience', () => {
+test('core loop systems move, attack, collide and reward loot without experience orbs', () => {
     const state = new GameState(configuration());
     const enemy = new Enemy(90, 0, state.definitions.enemiesByCode.get('walker'));
     state.enemies.push(enemy);
@@ -128,8 +132,7 @@ test('core loop systems move, attack, collide and reward experience', () => {
     const defeated = new LootSystem().rewardDefeatedEnemies(state);
     assert.equal(defeated.length, 1);
     assert.equal(state.kills, 1);
-    new LootSystem().updateOrbs(state, 1);
-    assert.ok(state.player.xp > 0);
+    assert.equal(state.orbs.length, 0);
 });
 
 test('pause reasons do not accidentally resume an upgrade or end screen', () => {

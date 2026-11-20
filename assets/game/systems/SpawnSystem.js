@@ -10,6 +10,12 @@ export class SpawnSystem {
     update(dt, width, height) {
         const state = this.state;
         state.wave = this.difficulty.waveAt(state.elapsed);
+        if (state.wave !== state.lastLootWave) {
+            state.lastLootWave = state.wave;
+            state.upgradesThisWave = 0;
+            state.lootSystem?.spawnWaveChests(state, state.wave);
+            state.objective = `Vague ${state.wave} : trouve le coffre de ravitaillement.`;
+        }
         this.spawnAvailableBosses(width, height);
         state.spawnTimer -= dt;
         if (state.spawnTimer > 0) return;
@@ -18,7 +24,7 @@ export class SpawnSystem {
             .filter((enemy) => !enemy.boss && enemy.availableAt <= state.elapsed && enemy.weight > 0);
         if (!available.length) return;
 
-        const count = Math.min(6, 1 + Math.floor(state.wave / 3));
+        const count = Math.min(5, 1 + Math.floor((state.wave - 1) / 2));
         for (let index = 0; index < count; index++) this.spawn(this.pickWeighted(available), width, height);
         state.spawnTimer = this.difficulty.spawnIntervalAt(state.elapsed);
     }
