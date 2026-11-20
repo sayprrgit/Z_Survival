@@ -42,6 +42,7 @@ export class Game {
             kills: root.querySelector('[data-kills]'), health: root.querySelector('[data-health]'),
             wave: root.querySelector('[data-wave]'), objective: root.querySelector('[data-objective]'), time: root.querySelector('[data-time]'),
             healthBar: root.querySelector('[data-health-bar]'), weapons: root.querySelector('[data-weapons]'), augments: root.querySelector('[data-augments]'), ammo: root.querySelector('[data-ammo]'), activeWeapon: root.querySelector('[data-active-weapon]'), reload: root.querySelector('[data-reload-status]'),
+            consumables: root.querySelector('[data-consumables]'),
         };
         this.selectWeaponFromHud = (event) => {
             const control = event.target.closest('[data-weapon-code]');
@@ -88,6 +89,8 @@ export class Game {
         if (weaponSwitchDirection) state.player.switchWeapon(weaponSwitchDirection);
         const weaponSlot = this.input.consumeWeaponSlot();
         if (weaponSlot !== null) state.player.selectWeapon([...state.player.weapons.keys()][weaponSlot]);
+        const consumableSlot = this.input.consumeConsumableSlot();
+        if (consumableSlot !== null) this.useConsumable([...state.player.consumables.keys()][consumableSlot]);
         if (this.input.consume('reload') && state.player.reloadWeapon()) state.soundEvents.push({ type: 'reload' });
         if (this.input.consume('interact')) {
             const loot = this.loot.interact(state);
@@ -158,6 +161,8 @@ export class Game {
         player.aimPreview = { x: player.x + player.aim.x * distance, y: player.y + player.aim.y * distance, hit: Boolean(hit) };
     }
 
+    useConsumable(code) { if (!code || !this.state.player.useConsumable(code)) return; if (code === 'magnet_burst') { for (const drop of this.state.drops) drop.x = this.state.player.x, drop.y = this.state.player.y; } if (code === 'one_shot') this.state.oneShotUntil = this.state.elapsed + 9; if (code === 'nuke') for (const enemy of this.state.enemies) if (!enemy.isBoss) enemy.takeDamage(Infinity); this.state.soundEvents.push({ type: code === 'nuke' ? 'explosion' : 'loot' }); }
+
     handleDefeatedEnemies(defeated) {
         for (const enemy of defeated) {
             if (enemy.code === this.state.finalBossCode) this.end('victory');
@@ -207,6 +212,7 @@ export class Game {
             augment.textContent = `${this.state.definitions.powerUpsByCode.get(code)?.name ?? code} N${item.level}`;
             return augment;
         }));
+        if (this.hud.consumables) this.hud.consumables.replaceChildren(...[...player.consumables].map(([code, amount], index) => { const button = document.createElement('button'); button.type = 'button'; button.disabled = amount < 1; button.textContent = `${index + 7} · ${code === 'magnet_burst' ? 'AIMANT' : code === 'one_shot' ? 'ONE SHOT' : 'NUKE'} ×${amount}`; button.addEventListener('click', () => this.useConsumable(code)); return button; }));
         if (this.pauseButton) { this.pauseButton.textContent = paused && !over ? 'Reprendre' : 'Pause'; this.pauseButton.setAttribute('aria-pressed', String(paused && !over)); }
         this.updateFullscreenButton();
     }

@@ -18,9 +18,10 @@
         <div class="arena-objective"><span>Vague <b data-wave>1</b></span><span data-objective>Tenir jusqu'à l'arrivée du Patient Zéro.</span></div>
         <div class="arena-loadout" data-weapons aria-label="Armes équipées"></div>
         <div class="arena-augments" data-augments aria-label="Augmentations actives"></div>
+        <div class="arena-loadout" data-consumables aria-label="Consommables"></div>
         <div class="arena-loot-key"><span class="loot-ammo">BLEU · munitions</span><span class="loot-weapon">OR · arme</span><span class="loot-upgrade">VIOLET · augmentation</span><span class="loot-chest">CYAN · ferraille</span><span class="loot-chest">COFFRE · E pour ouvrir</span></div>
         <canvas data-game-canvas aria-label="Jeu de survie. Déplacement avec ZQSD ou les flèches."></canvas>
-        <p class="arena-help">Déplacement : ZQSD / WASD / flèches · souris : viser · clic gauche : tirer · 1–6, clic ou molette : changer d’arme · X : arme suivante · R : recharger · E : ouvrir un coffre</p>
+        <p class="arena-help">Déplacement : ZQSD / WASD / flèches · souris : viser · clic gauche : tirer · 1–6, clic ou molette : changer d’arme · 7–9 : consommables · R : recharger · E : ouvrir un coffre</p>
         <div class="upgrade-overlay" data-upgrade hidden><div class="upgrade-dialog"><p class="eyebrow">COFFRE OUVERT</p><h2>Choisis une amélioration</h2><div data-upgrade-options></div></div></div>
         <div class="upgrade-overlay" data-talents hidden><div class="upgrade-dialog"><p class="eyebrow">ARBRE DES TALENTS · FERRAILLE</p><h2>Déblocages de mission</h2><div data-talent-options></div></div></div>
         <div class="upgrade-overlay" data-game-over hidden><div class="upgrade-dialog"><p class="eyebrow">PARTIE TERMINÉE</p><h2 data-end-title></h2><p data-end-stats></p><button class="button" type="button" data-open-talents>Arbre des talents</button><a class="button button-secondary" href="{{ path('character_index') }}">Retour au choix du survivant</a></div></div>

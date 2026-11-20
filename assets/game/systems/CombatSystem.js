@@ -12,7 +12,7 @@ export class CombatSystem {
 
         const aim = player.aim ?? player.facing;
         const angle = Math.atan2(aim.y, aim.x);
-        const damage = weapon.damage * player.damageMultiplier * (1 + (item.level - 1) * .12) * (Math.random() < player.criticalChance ? 2 : 1);
+        const damage = state.elapsed < state.oneShotUntil ? Infinity : weapon.damage * player.damageMultiplier * (1 + (item.level - 1) * .12) * (Math.random() < player.criticalChance ? 2 : 1);
         const interval = Math.max(.12, weapon.interval * Math.max(.62, 1 - (item.level - 1) * .07) / Math.max(.35, player.attackSpeedMultiplier));
         item.cooldown = interval;
         player.attackFlash = .12;

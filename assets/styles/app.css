@@ -202,6 +202,7 @@ p { color: #b9c4b9; line-height: 1.6; }
 .upgrade-dialog h2 { margin: .3rem 0 1.2rem; color: var(--paper); font-size: clamp(1.8rem,5vw,3rem); }
 [data-upgrade-options] { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .7rem; }
 .talent-tree { display: grid; grid-template-columns: repeat(3, minmax(220px,1fr)); gap: 1rem; overflow-x: auto; padding: .5rem; }
+.upgrade-overlay[data-talents] .upgrade-dialog { max-height:calc(100vh - 7rem); overflow-y:auto; overscroll-behavior:contain; }.upgrade-overlay[data-talents] .talent-tree { overflow:auto; }
 .talent-branch { position: relative; display: flex; min-width: 220px; flex-direction: column; align-items: center; gap: .65rem; padding: .65rem; border: 1px solid rgba(105,209,176,.2); background: linear-gradient(180deg,rgba(30,49,43,.55),rgba(16,19,18,.8)); }
 .talent-branch h3 { margin: 0; color: #69d1b0; font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; }
 .talent-node { position: relative; width: 100%; min-height: 82px; border: 1px solid rgba(230,230,228,.28); padding: .55rem; background: #171d1b; color: var(--paper); text-align: left; cursor: pointer; }

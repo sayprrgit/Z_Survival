@@ -3,6 +3,7 @@ export class InputManager {
         this.keys = new Set();
         this.actions = new Set();
         this.weaponSlot = null;
+        this.consumableSlot = null;
         this.weaponSwitchDirection = 0;
         this.pointerPosition = null;
         this.firing = false;
@@ -19,6 +20,8 @@ export class InputManager {
             if (key === 'r') this.actions.add('reload');
             if (key === 'e') this.actions.add('interact');
             if (slot) this.weaponSlot = Number(slot) - 1;
+            const consumableSlot = event.code.match(/^Digit([7-9])$/)?.[1];
+            if (consumableSlot) this.consumableSlot = Number(consumableSlot) - 7;
             this.keys.add(key);
         };
         this.up = (event) => this.keys.delete(event.key.toLowerCase());
@@ -46,6 +49,7 @@ export class InputManager {
     }
     consume(action) { const present = this.actions.has(action); this.actions.delete(action); return present; }
     consumeWeaponSlot() { const slot = this.weaponSlot; this.weaponSlot = null; return slot; }
+    consumeConsumableSlot() { const slot = this.consumableSlot; this.consumableSlot = null; return slot; }
     consumeWeaponSwitchDirection() { const direction = this.weaponSwitchDirection; this.weaponSwitchDirection = 0; return direction; }
     pointer() { return this.pointerPosition; }
     isFiring() { return this.firing; }

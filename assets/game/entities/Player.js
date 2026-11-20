@@ -8,6 +8,7 @@ export class Player extends Actor {
         this.powerUps = new Map();
         this.maxPowerUps = 3;
         this.unlockedWeapons = new Set(['pistol', 'assault_rifle', 'shotgun', 'mace', 'knife', 'molotov']);
+        this.consumables = new Map();
         this.facing = { x: 1, y: 0 };
         this.isMoving = false;
         this.activeWeaponCode = null;
@@ -29,6 +30,8 @@ export class Player extends Actor {
     }
 
     get activeWeapon() { return this.weapons.get(this.activeWeaponCode); }
+    addConsumable(code) { this.consumables.set(code, (this.consumables.get(code) ?? 0) + 1); }
+    useConsumable(code) { const amount = this.consumables.get(code) ?? 0; if (!amount) return false; this.consumables.set(code, amount - 1); return true; }
     unlockWeapon(code) { this.unlockedWeapons.add(code); }
 
     switchWeapon(direction = 1) {

@@ -9,6 +9,7 @@ export class LootSystem {
             defeated.push(enemy);
             state.kills++;
             if (Math.random() < .16) state.drops.push({ x: enemy.x, y: enemy.y, radius: 11, type: 'resource', amount: 2 });
+            else if (Math.random() < .004) state.drops.push({ x: enemy.x, y: enemy.y, radius: 12, type: 'consumable', code: ['magnet_burst', 'one_shot', 'nuke'][Math.floor(Math.random() * 3)] });
             else if (enemy.isBoss || Math.random() < .08) state.drops.push({ x: enemy.x, y: enemy.y, radius: 13, type: Math.random() < .25 ? 'weapon' : 'upgrade' });
             else if (Math.random() < .25) state.drops.push({ x: enemy.x, y: enemy.y, radius: 11, type: 'ammo', amount: 10 });
         }
@@ -55,6 +56,7 @@ export class LootSystem {
                 if (candidates.length) state.player.addWeapon(candidates[Math.floor(Math.random() * candidates.length)]);
                 else state.player.addAmmo(20);
             } else if (drop.type === 'resource') { state.resources += drop.amount ?? 1; state.soundEvents.push({ type: 'loot' }); }
+            else if (drop.type === 'consumable') { state.player.addConsumable(drop.code); state.soundEvents.push({ type: 'loot' }); }
             else if (this.claimUpgrade(state)) state.pendingUpgradeDrops++;
             else state.player.addAmmo(6);
         }

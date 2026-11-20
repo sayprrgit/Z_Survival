@@ -25,6 +25,7 @@ export class GameState {
         this.fireZones = [];
         this.messages = [];
         this.soundEvents = [];
+        this.oneShotUntil = 0;
         this.elapsed = 0;
         this.kills = 0;
         this.resources = 0;
